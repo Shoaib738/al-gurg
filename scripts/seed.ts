@@ -554,6 +554,459 @@ async function main() {
     },
   })
 
+  // =====================================================
+  // NEW DEMO ENTRIES — different workflow stages
+  // Adds: 1 NEW enquiry, 1 DRAFT quotation, 1 PENDING_APPROVAL quotation,
+  // 1 SENT_TO_CLIENT quotation, 1 IN_PROCUREMENT project, 1 READY_FOR_DELIVERY project.
+  // All existing data above is preserved unchanged.
+  // =====================================================
+
+  // --- New clients for the new demo entries ---
+  const fatimaClient = await db.client.create({
+    data: {
+      name: 'Mrs. Fatima Al Sayed',
+      type: ClientType.RETAIL,
+      email: 'fatima.alsayed@example.com',
+      phone: '+971502345678',
+      whatsapp: '+971502345678',
+      address: 'Arabian Ranches, Dubai, UAE',
+    },
+  })
+  const marinaClient = await db.client.create({
+    data: {
+      name: 'Dubai Marina Apartments',
+      type: ClientType.PROJECT,
+      company: 'Dubai Marina Apartments LLC',
+      contactPerson: 'Mr. Tariq Bin Salim',
+      email: 'tariq@marinaapartments.ae',
+      phone: '+97143456789',
+      whatsapp: '+97143456789',
+      address: 'Dubai Marina, Dubai, UAE',
+    },
+  })
+  const internalClient = await db.client.create({
+    data: {
+      name: 'Al Gurg Group (Internal)',
+      type: ClientType.PROJECT,
+      company: 'Al Gurg Group LLC',
+      contactPerson: 'Mr. Mazen Al Gurg',
+      email: 'mazen@algurggroup.ae',
+      phone: '+971500000002',
+      whatsapp: '+971500000002',
+      address: 'Al Quoz Industrial Area 3, Dubai, UAE',
+    },
+  })
+
+  // === Entry 1: New enquiry (status: NEW) - Fatima ===
+  const enquiry3 = await db.enquiry.create({
+    data: {
+      enquiryNo: 'ENQ-2026-003',
+      enquiryDate: new Date('2026-11-18'),
+      source: EnquirySource.PHONE,
+      clientId: fatimaClient.id,
+      salesUserId: users.sales.id,
+      title: 'Bedroom Wardrobe and Vanity Set',
+      description: 'Walk-in wardrobe with mirrored sliding doors plus matching vanity with stone top. Approx 3 linear meters.',
+      projectType: 'Wardrobe, Vanity',
+      location: 'Arabian Ranches, Dubai',
+      attachments: JSON.stringify(['bedroom-layout.pdf', 'finish-sample.jpg']),
+      status: EnquiryStatus.NEW,
+    },
+  })
+
+  // === Entry 2: Draft quotation (status: DRAFT) - for existing ENQ-2026-002 ===
+  const q2 = await db.quotation.create({
+    data: {
+      quotationNo: 'QUO-2026-002',
+      enquiryId: enquiry2.id,
+      clientId: clients.retail.id,
+      createdBy: users.roy.id,
+      template: 'retail-standard',
+      validity: 30,
+      deliveryWeeks: 4,
+      paymentTerms: '50% advance, 50% before delivery',
+      warranty: '2 years on manufacturing defects',
+      subtotal: 18_500,
+      discount: 0,
+      vat: 925,
+      total: 19_425,
+      status: QuotationStatus.DRAFT,
+      notes: 'L-shaped walk-in wardrobe, mirrored sliding doors, internal drawers and shelving. Excludes electrical work.',
+    },
+  })
+  await db.quotationItem.createMany({
+    data: [
+      { quotationId: q2.id, lineNumber: 1, description: 'Walk-in wardrobe body - Laminated MDF', spec: '18mm MDF body, oak laminate', qty: 4.5, unit: 'meter', material: 'MDF + Laminate', materialCost: 1500, laborHours: 10, laborRate: 45, productionHours: 12, installationHours: 4, unitPrice: 2667, total: 12000 },
+      { quotationId: q2.id, lineNumber: 2, description: 'Mirrored sliding doors with track', spec: '6mm mirror, soft-close track', qty: 2, unit: 'panel', material: 'Mirror + Aluminium', materialCost: 1800, laborHours: 6, laborRate: 45, productionHours: 8, installationHours: 2, unitPrice: 3250, total: 6500 },
+    ],
+  })
+  await db.timelineEvent.createMany({
+    data: [
+      { enquiryId: enquiry2.id, quotationId: q2.id, userId: users.roy.id, stage: 'Quotation Drafted', message: 'Quotation QUO-2026-002 drafted (DRAFT) - awaiting review', createdAt: new Date('2026-11-14T10:00:00Z') },
+    ],
+  })
+
+  // === Entry 3: Pending approval quotation (status: PENDING_APPROVAL) - Fatima ===
+  const q3 = await db.quotation.create({
+    data: {
+      quotationNo: 'QUO-2026-003',
+      enquiryId: enquiry3.id,
+      clientId: fatimaClient.id,
+      createdBy: users.roy.id,
+      template: 'retail-standard',
+      validity: 30,
+      deliveryWeeks: 5,
+      paymentTerms: '40% advance, 60% before delivery',
+      warranty: '2 years on manufacturing defects',
+      subtotal: 32_000,
+      discount: 0,
+      vat: 1_600,
+      total: 33_600,
+      status: QuotationStatus.PENDING_APPROVAL,
+      notes: 'Wardrobe + Vanity set. Stone top for vanity to be procured separately by client or via Al Gurg (subject to approval).',
+    },
+  })
+  await db.quotationItem.createMany({
+    data: [
+      { quotationId: q3.id, lineNumber: 1, description: 'Bedroom wardrobe - Veneered MDF body', spec: '18mm MDF body, oak veneer doors, soft-close hinges', qty: 3, unit: 'meter', material: 'MDF + Veneer', materialCost: 5500, laborHours: 18, laborRate: 45, productionHours: 20, installationHours: 4, unitPrice: 6000, total: 18000 },
+      { quotationId: q3.id, lineNumber: 2, description: 'Vanity unit with stone top cutout', spec: 'MDF body, laminate finish, marble cutout', qty: 1, unit: 'piece', material: 'MDF + Laminate + Stone', materialCost: 6000, laborHours: 14, laborRate: 45, productionHours: 16, installationHours: 3, unitPrice: 14000, total: 14000 },
+    ],
+  })
+  await db.quotationComment.create({
+    data: { quotationId: q3.id, userId: users.roy.id, text: 'Please review pricing for vanity stone top - I included marble cutout but actual stone to be sourced by procurement. Confirm if we should quote the stone separately.', createdAt: new Date('2026-11-19T15:30:00Z') },
+  })
+  await db.timelineEvent.createMany({
+    data: [
+      { enquiryId: enquiry3.id, userId: users.sales.id, stage: 'Enquiry Received', message: 'New enquiry ENQ-2026-003 received via phone from Mrs. Fatima Al Sayed', createdAt: new Date('2026-11-18T11:00:00Z') },
+      { enquiryId: enquiry3.id, quotationId: q3.id, userId: users.roy.id, stage: 'Quotation Drafted', message: 'Quotation QUO-2026-003 drafted by Estimation', createdAt: new Date('2026-11-19T14:00:00Z') },
+      { enquiryId: enquiry3.id, quotationId: q3.id, userId: users.roy.id, stage: 'Submitted for Approval', message: 'Quotation QUO-2026-003 submitted to Mr. Mazen for approval', createdAt: new Date('2026-11-19T15:00:00Z') },
+    ],
+  })
+
+  // === Entry 4: Sent quotation (status: SENT_TO_CLIENT) - Marina Apartments ===
+  const enquiry4 = await db.enquiry.create({
+    data: {
+      enquiryNo: 'ENQ-2026-004',
+      enquiryDate: new Date('2026-11-19'),
+      source: EnquirySource.EMAIL,
+      clientId: marinaClient.id,
+      salesUserId: users.sales.id,
+      title: 'Kitchen Cabinets Bulk Order',
+      description: '50 unit kitchen cabinets for Marina Apartments Tower B renovation. Standardised modular design.',
+      projectType: 'Kitchen',
+      location: 'Dubai Marina',
+      attachments: JSON.stringify(['kitchen-spec.pdf', 'tower-b-layouts.zip']),
+      status: EnquiryStatus.QUOTED,
+    },
+  })
+  const q4 = await db.quotation.create({
+    data: {
+      quotationNo: 'QUO-2026-004',
+      enquiryId: enquiry4.id,
+      clientId: marinaClient.id,
+      createdBy: users.roy.id,
+      template: 'project-standard',
+      validity: 45,
+      deliveryWeeks: 8,
+      paymentTerms: '30% advance, 60% before delivery, 10% after installation',
+      warranty: '2 years on manufacturing defects',
+      subtotal: 110_000,
+      discount: 0,
+      vat: 5_500,
+      total: 115_500,
+      status: QuotationStatus.SENT_TO_CLIENT,
+      approvedBy: users.mazen.id,
+      approvedAt: new Date('2026-11-21T10:00:00Z'),
+      sentAt: new Date('2026-11-22T09:00:00Z'),
+      notes: 'Standardised modular kitchen cabinets. Excludes counter tops, sinks and appliances. Site survey to be arranged after signature.',
+    },
+  })
+  await db.quotationItem.createMany({
+    data: [
+      { quotationId: q4.id, lineNumber: 1, description: 'Modular Kitchen Cabinet - Standard Unit', spec: '18mm MDF body, laminate finish, soft-close hinges, 1m wide', qty: 50, unit: 'piece', material: 'MDF + Laminate', materialCost: 1200, laborHours: 8, laborRate: 45, productionHours: 10, installationHours: 2, unitPrice: 2200, total: 110000 },
+    ],
+  })
+  await db.timelineEvent.createMany({
+    data: [
+      { enquiryId: enquiry4.id, userId: users.sales.id, stage: 'Enquiry Received', message: 'New enquiry ENQ-2026-004 received via email from Dubai Marina Apartments', createdAt: new Date('2026-11-19T09:30:00Z') },
+      { enquiryId: enquiry4.id, quotationId: q4.id, userId: users.roy.id, stage: 'Quotation Drafted', message: 'Quotation QUO-2026-004 drafted by Estimation', createdAt: new Date('2026-11-20T14:00:00Z') },
+      { enquiryId: enquiry4.id, quotationId: q4.id, userId: users.roy.id, stage: 'Submitted for Approval', message: 'Quotation submitted to Mr. Mazen for approval', createdAt: new Date('2026-11-20T16:00:00Z') },
+      { enquiryId: enquiry4.id, quotationId: q4.id, userId: users.mazen.id, stage: 'Quotation Approved', message: 'Quotation approved by Business Manager', createdAt: new Date('2026-11-21T10:00:00Z') },
+      { enquiryId: enquiry4.id, quotationId: q4.id, userId: users.sales.id, stage: 'Sent to Client', message: 'Quotation sent to Dubai Marina Apartments - awaiting client signature', createdAt: new Date('2026-11-22T09:00:00Z') },
+    ],
+  })
+
+  // === Entry 5: New project in procurement (status: IN_PROCUREMENT) ===
+  // QUO-2026-005 is a parallel progressed quotation (signed + paid + order released)
+  // used to seed PRJ-2026-002. Kept separate from QUO-2026-004 so the SENT_TO_CLIENT
+  // demo entry is preserved.
+  const q5 = await db.quotation.create({
+    data: {
+      quotationNo: 'QUO-2026-005',
+      enquiryId: enquiry4.id,
+      clientId: marinaClient.id,
+      createdBy: users.roy.id,
+      template: 'project-standard',
+      validity: 45,
+      deliveryWeeks: 8,
+      paymentTerms: '30% advance, 60% before delivery, 10% after installation',
+      warranty: '2 years on manufacturing defects',
+      subtotal: 110_000,
+      discount: 0,
+      vat: 5_500,
+      total: 115_500,
+      status: QuotationStatus.ORDER_RELEASED,
+      approvedBy: users.mazen.id,
+      approvedAt: new Date('2026-11-16T10:00:00Z'),
+      sentAt: new Date('2026-11-17T09:00:00Z'),
+      signedAt: new Date('2026-11-18T14:00:00Z'),
+      notes: 'Same scope as QUO-2026-004 but progressed: signed and advance paid. Used to seed PRJ-2026-002 in IN_PROCUREMENT stage.',
+    },
+  })
+  await db.quotationItem.createMany({
+    data: [
+      { quotationId: q5.id, lineNumber: 1, description: 'Modular Kitchen Cabinet - Standard Unit', spec: '18mm MDF body, laminate finish, soft-close hinges, 1m wide', qty: 50, unit: 'piece', material: 'MDF + Laminate', materialCost: 1200, laborHours: 8, laborRate: 45, productionHours: 10, installationHours: 2, unitPrice: 2200, total: 110000 },
+    ],
+  })
+
+  const project2 = await db.project.create({
+    data: {
+      projectNo: 'PRJ-2026-002',
+      name: 'Marina Apartments Kitchen renovation',
+      enquiryId: enquiry4.id,
+      quotationId: q5.id,
+      clientId: marinaClient.id,
+      type: ClientType.PROJECT,
+      startDate: new Date('2026-11-20'),
+      dueDate: new Date('2027-01-15'),
+      deliveryDate: new Date('2027-01-10'),
+      status: ProjectStatus.IN_PROCUREMENT,
+    },
+  })
+
+  // Advance payment link for q5
+  await db.paymentLink.create({
+    data: {
+      projectId: project2.id,
+      quotationId: q5.id,
+      amount: 34_650, // 30% advance
+      linkRef: 'PAY-2026-002',
+      status: PaymentLinkStatus.PAID,
+      generatedById: users.finance.id,
+      generatedAt: new Date('2026-11-18T15:00:00Z'),
+      sentAt: new Date('2026-11-18T15:30:00Z'),
+      paidAt: new Date('2026-11-19T09:00:00Z'),
+    },
+  })
+
+  // BOQ-M-002 for PRJ-2026-002 (issued to procurement)
+  const boq2 = await db.boq.create({
+    data: {
+      boqNo: 'BOQ-M-002',
+      projectId: project2.id,
+      quotationId: q5.id,
+      issuedBy: users.roy.id,
+      status: BoqStatus.IN_PROCUREMENT,
+      issuedAt: new Date('2026-11-21T11:00:00Z'),
+    },
+  })
+  await db.boqItem.createMany({
+    data: [
+      { boqId: boq2.id, materialId: materials.mdf18.id, description: 'MDF Board 18mm MR Grade', spec: '2440x1220', qty: 75, unit: 'sheet', available: true },
+      { boqId: boq2.id, materialId: materials.laminate.id, description: 'High Pressure Laminate', spec: '1mm Decorative', qty: 50, unit: 'sheet', available: false, notes: 'Out of stock - need procurement' },
+      { boqId: boq2.id, materialId: materials.hinges.id, description: 'Soft Close Hinges 110deg', spec: 'full overlay', qty: 200, unit: 'piece', available: true },
+      { boqId: boq2.id, materialId: materials.handles.id, description: 'Bar Handle 128mm Matte Black', spec: 'matte', qty: 100, unit: 'piece', available: true },
+    ],
+  })
+
+  // MRQ-2026-002 (SUBMITTED, awaiting supplier quotes)
+  const mrq2 = await db.materialRequisition.create({
+    data: {
+      mrqNo: 'MRQ-2026-002',
+      projectId: project2.id,
+      boqId: boq2.id,
+      createdById: users.nimesha.id,
+      status: MrqStatus.SUBMITTED,
+      createdAt: new Date('2026-11-22T09:00:00Z'),
+    },
+  })
+  await db.materialRequisitionItem.createMany({
+    data: [
+      { mrqId: mrq2.id, materialId: materials.laminate.id, description: 'High Pressure Laminate 1mm', spec: 'Decorative', qty: 50, unit: 'sheet', quotedPrice: null },
+    ],
+  })
+
+  await db.timelineEvent.createMany({
+    data: [
+      { enquiryId: enquiry4.id, projectId: project2.id, quotationId: q5.id, userId: users.sales.id, stage: 'Sent to Client', message: 'Quotation QUO-2026-005 sent to client', createdAt: new Date('2026-11-17T09:00:00Z') },
+      { enquiryId: enquiry4.id, projectId: project2.id, quotationId: q5.id, userId: users.sales.id, stage: 'Client Signed', message: 'Signed quotation received from Dubai Marina Apartments', createdAt: new Date('2026-11-18T14:00:00Z') },
+      { projectId: project2.id, userId: users.finance.id, stage: 'Payment Link Generated', message: 'Advance payment link PAY-2026-002 generated (30% of total)', createdAt: new Date('2026-11-18T15:00:00Z') },
+      { projectId: project2.id, userId: users.finance.id, stage: 'Payment Received', message: 'Advance payment received from client', createdAt: new Date('2026-11-19T09:00:00Z') },
+      { projectId: project2.id, userId: users.roy.id, stage: 'Order Released', message: 'Order released - email sent to Procurement, Technical & Production', createdAt: new Date('2026-11-20T11:00:00Z') },
+      { projectId: project2.id, quotationId: q5.id, userId: users.roy.id, stage: 'BOQ Issued', message: 'BOQ-M-002 issued to Procurement', createdAt: new Date('2026-11-21T11:00:00Z') },
+      { projectId: project2.id, userId: users.nimesha.id, stage: 'MRQ Created', message: 'MRQ-2026-002 created - awaiting supplier quotes for laminate', createdAt: new Date('2026-11-22T09:00:00Z') },
+    ],
+  })
+
+  // === Entry 6: Project ready for delivery (status: READY_FOR_DELIVERY) ===
+  const enquiry5 = await db.enquiry.create({
+    data: {
+      enquiryNo: 'ENQ-2026-005',
+      enquiryDate: new Date('2026-10-25'),
+      source: EnquirySource.WALK_IN,
+      clientId: internalClient.id,
+      salesUserId: users.sales.id,
+      title: 'Office Furniture - Al Gurg HQ',
+      description: 'Office desks and storage cabinets for new HQ floor. 10 desks and 10 storage units.',
+      projectType: 'Office Furniture',
+      location: 'Al Quoz, Dubai',
+      attachments: JSON.stringify(['office-layout.pdf']),
+      status: EnquiryStatus.CONFIRMED,
+    },
+  })
+  const q6 = await db.quotation.create({
+    data: {
+      quotationNo: 'QUO-2026-006',
+      enquiryId: enquiry5.id,
+      clientId: internalClient.id,
+      createdBy: users.roy.id,
+      template: 'project-standard',
+      validity: 30,
+      deliveryWeeks: 4,
+      paymentTerms: 'Internal transfer',
+      warranty: '2 years on manufacturing defects',
+      subtotal: 60_000,
+      discount: 0,
+      vat: 3_000,
+      total: 63_000,
+      status: QuotationStatus.ORDER_RELEASED,
+      approvedBy: users.mazen.id,
+      approvedAt: new Date('2026-10-28T10:00:00Z'),
+      sentAt: new Date('2026-10-29T09:00:00Z'),
+      signedAt: new Date('2026-10-30T11:00:00Z'),
+      notes: 'Internal Al Gurg project. 10 desks + 10 storage cabinets.',
+    },
+  })
+  await db.quotationItem.createMany({
+    data: [
+      { quotationId: q6.id, lineNumber: 1, description: 'Executive Office Desk - Laminated MDF', spec: '18mm MDF body, oak laminate, cable management', qty: 10, unit: 'piece', material: 'MDF + Laminate', materialCost: 1500, laborHours: 8, laborRate: 45, productionHours: 10, installationHours: 2, unitPrice: 3000, total: 30000 },
+      { quotationId: q6.id, lineNumber: 2, description: 'Storage Cabinet - Sliding Doors', spec: '18mm MDF body, laminate finish, soft-close', qty: 10, unit: 'piece', material: 'MDF + Laminate', materialCost: 1500, laborHours: 8, laborRate: 45, productionHours: 10, installationHours: 2, unitPrice: 3000, total: 30000 },
+    ],
+  })
+
+  const project3 = await db.project.create({
+    data: {
+      projectNo: 'PRJ-2026-003',
+      name: 'Office Furniture - Al Gurg HQ',
+      enquiryId: enquiry5.id,
+      quotationId: q6.id,
+      clientId: internalClient.id,
+      type: ClientType.PROJECT,
+      startDate: new Date('2026-11-01'),
+      dueDate: new Date('2026-11-30'),
+      deliveryDate: new Date('2026-12-01'),
+      status: ProjectStatus.READY_FOR_DELIVERY,
+    },
+  })
+
+  await db.paymentLink.create({
+    data: {
+      projectId: project3.id,
+      quotationId: q6.id,
+      amount: 18_900, // 30% advance
+      linkRef: 'PAY-2026-003',
+      status: PaymentLinkStatus.PAID,
+      generatedById: users.finance.id,
+      generatedAt: new Date('2026-10-30T13:00:00Z'),
+      sentAt: new Date('2026-10-30T13:30:00Z'),
+      paidAt: new Date('2026-11-01T09:00:00Z'),
+    },
+  })
+
+  // Drawing submission for PRJ-2026-003
+  await db.drawingSubmission.create({
+    data: {
+      drawingNo: 'DRW-2026-002',
+      projectId: project3.id,
+      drawnById: users.draft.id,
+      drawingType: 'Shop Drawing',
+      approvedById: users.wasim.id,
+      approvedByClientAt: new Date('2026-11-03T15:00:00Z'),
+      status: DrawingStatus.APPROVED,
+      attachmentsJson: JSON.stringify(['desk-elevation.pdf', 'cabinet-plan.pdf']),
+      remarks: 'Drawings approved internally.',
+      createdAt: new Date('2026-11-02T10:00:00Z'),
+    },
+  })
+
+  // Production order PRD-2026-003 - joinery, all stages QC_PASSED
+  const prodJoinery3 = await db.productionOrder.create({
+    data: {
+      orderNo: 'PRD-2026-003',
+      projectId: project3.id,
+      type: ProductionType.JOINERY,
+      releasedBy: users.motasem.id,
+      drawingApproved: true,
+      dueDate: new Date('2026-11-28'),
+      status: 'COMPLETED',
+    },
+  })
+  const joineryStages3 = ['Pressing', 'Cutting', 'Lipping / Edge Banding', 'Boring', 'CNC Routing', 'Sanding', 'Painting', 'Packing', 'Delivery']
+  for (let i = 0; i < joineryStages3.length; i++) {
+    const stageName = joineryStages3[i]
+    const startDay = 6 + i * 2
+    const endDay = 7 + i * 2
+    const startDate = new Date(`2026-11-${String(startDay).padStart(2, '0')}T08:00:00Z`)
+    const endDate = new Date(`2026-11-${String(endDay).padStart(2, '0')}T17:00:00Z`)
+    const qc = await db.qcReport.create({
+      data: {
+        reportNo: `QC-PRD3-J-${i + 1}`,
+        type: 'PRODUCTION_STAGE',
+        refType: 'ProductionStage',
+        refId: 'pending',
+        qcUserId: users.venkat.id,
+        inspectionDate: endDate,
+        status: 'PASSED',
+        checklistJson: JSON.stringify([
+          { item: 'Quality check passed', status: 'PASS' },
+          { item: 'Dimensions within tolerance', status: 'PASS' },
+          { item: 'Surface finish acceptable', status: 'PASS' },
+        ]),
+        submittedAt: new Date(endDate.getTime() + 30 * 60 * 1000),
+      },
+    })
+    const stage = await db.productionStage.create({
+      data: {
+        productionOrderId: prodJoinery3.id,
+        stageName,
+        stageOrder: i + 1,
+        operatorId: users.motasem.id,
+        status: StageStatus.QC_PASSED,
+        startedAt: startDate,
+        completedAt: endDate,
+        qcReportId: qc.id,
+      },
+    })
+    await db.qcReport.update({
+      where: { id: qc.id },
+      data: { refId: stage.id, productionStageId: stage.id },
+    })
+  }
+
+  await db.timelineEvent.createMany({
+    data: [
+      { enquiryId: enquiry5.id, projectId: project3.id, quotationId: q6.id, userId: users.sales.id, stage: 'Enquiry Received', message: 'Internal enquiry ENQ-2026-005 received from Al Gurg management', createdAt: new Date('2026-10-25T09:00:00Z') },
+      { enquiryId: enquiry5.id, projectId: project3.id, quotationId: q6.id, userId: users.roy.id, stage: 'Quotation Drafted', message: 'Quotation QUO-2026-006 drafted by Estimation', createdAt: new Date('2026-10-27T14:00:00Z') },
+      { enquiryId: enquiry5.id, projectId: project3.id, quotationId: q6.id, userId: users.mazen.id, stage: 'Quotation Approved', message: 'Quotation approved by Business Manager', createdAt: new Date('2026-10-28T10:00:00Z') },
+      { enquiryId: enquiry5.id, projectId: project3.id, quotationId: q6.id, userId: users.sales.id, stage: 'Client Signed', message: 'Quotation signed internally by Mr. Mazen', createdAt: new Date('2026-10-30T11:00:00Z') },
+      { projectId: project3.id, userId: users.finance.id, stage: 'Payment Link Generated', message: 'Internal payment link PAY-2026-003 generated', createdAt: new Date('2026-10-30T13:00:00Z') },
+      { projectId: project3.id, userId: users.roy.id, stage: 'Order Released', message: 'Order released - production initiated', createdAt: new Date('2026-11-01T11:00:00Z') },
+      { projectId: project3.id, userId: users.draft.id, stage: 'Drawings Approved', message: 'DRW-2026-002 approved - released to production', createdAt: new Date('2026-11-03T15:00:00Z') },
+      { projectId: project3.id, userId: users.motasem.id, stage: 'Production Completed', message: 'All joinery stages completed with QC PASSED', createdAt: new Date('2026-11-28T17:00:00Z') },
+      { projectId: project3.id, userId: users.wasim.id, stage: 'Ready for Delivery', message: 'Project ready for delivery - awaiting dispatch', createdAt: new Date('2026-11-29T09:00:00Z') },
+    ],
+  })
+
   // ---------- Notifications ----------
   const notifs = [
     { userId: users.roy.id, type: 'ENQUIRY_NEW', title: 'New Enquiry', message: 'New enquiry ENQ-2026-002 received from sales team', refType: 'Enquiry', refId: enquiry2.id },
@@ -564,6 +1017,13 @@ async function main() {
     { userId: users.wasim.id, type: 'RED_FLAG', title: 'Red Flag Raised', message: 'High severity delay flag on PRJ-2026-001 - production', refType: 'Project', refId: project1.id },
     { userId: users.store.id, type: 'TAX_INVOICE_PENDING', title: 'Tax Invoice Pending', message: 'GRN-2026-001 - supplier tax invoice not yet submitted', refType: 'GRN', refId: grn1.id },
     { userId: users.finance.id, type: 'PAYMENT_RECEIVED', title: 'Payment Received', message: 'Advance payment PAY-2026-001 received from Skyline Hospitality', refType: 'PaymentLink', refId: 'pending' },
+    // Notifications for new demo entries
+    { userId: users.roy.id, type: 'ENQUIRY_NEW', title: 'New Enquiry', message: 'New phone enquiry ENQ-2026-003 from Mrs. Fatima Al Sayed (Wardrobe & Vanity)', refType: 'Enquiry', refId: enquiry3.id },
+    { userId: users.mazen.id, type: 'APPROVAL_PENDING', title: 'Quotation Pending Approval', message: 'QUO-2026-003 awaiting your approval - review vanity stone top pricing', refType: 'Quotation', refId: q3.id },
+    { userId: users.sales.id, type: 'CLIENT_FOLLOWUP', title: 'Awaiting Client Signature', message: 'QUO-2026-004 sent to Dubai Marina Apartments - awaiting signature', refType: 'Quotation', refId: q4.id },
+    { userId: users.nimesha.id, type: 'BOQ_RECEIVED', title: 'BOQ-M Received', message: 'BOQ-M-002 issued for project PRJ-2026-002 (Marina Apartments kitchen)', refType: 'BOQ', refId: boq2.id },
+    { userId: users.nimesha.id, type: 'MRQ_PENDING', title: 'MRQ Awaiting Quotes', message: 'MRQ-2026-002 awaiting supplier quotes for laminate', refType: 'MRQ', refId: mrq2.id },
+    { userId: users.wasim.id, type: 'DELIVERY_READY', title: 'Project Ready for Delivery', message: 'PRJ-2026-003 (Al Gurg HQ office furniture) ready for delivery', refType: 'Project', refId: project3.id },
   ]
   for (const n of notifs) {
     await db.notification.create({ data: n })

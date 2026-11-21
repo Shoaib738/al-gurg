@@ -29,10 +29,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, ShieldCheck, Bell } from "lucide-react";
+import { Plus, ShieldCheck, Bell, Printer } from "lucide-react";
 import { formatDate, parseJsonSafe } from "@/lib/format";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
+import { SlipDocument, SlipDialog } from "../slip-document";
 
 export function GrnView({ user }: { user: SessionUser }) {
   const { data, isLoading } = useList<any>("grns");
@@ -119,6 +120,7 @@ function GrnDetailDialog({ id, onOpenChange, user }: { id: string | null; onOpen
   const { data: g, isLoading } = useDetail<any>("grn", id);
   const mutation = useAction();
   const [qcOpen, setQcOpen] = useState(false);
+  const [slipOpen, setSlipOpen] = useState(false);
   const canMarkTax = (user.role === "STORE" || user.role === "ADMIN") && g && !g.taxInvoiceSubmitted;
   const docs = g ? parseJsonSafe<string[]>(g.documentsReceived, []) : [];
 
@@ -162,11 +164,16 @@ function GrnDetailDialog({ id, onOpenChange, user }: { id: string | null; onOpen
                     </CardContent>
                   </Card>
                 )}
-                {g.status === "QC_PENDING" && (user.role === "QC" || user.role === "ADMIN") && (
-                  <Button className="w-full" onClick={() => setQcOpen(true)}>
-                    <ShieldCheck className="size-4" /> Submit QC inspection
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" onClick={() => setSlipOpen(true)}>
+                    <Printer className="size-4" /> Print GRN
                   </Button>
-                )}
+                  {g.status === "QC_PENDING" && (user.role === "QC" || user.role === "ADMIN") && (
+                    <Button onClick={() => setQcOpen(true)}>
+                      <ShieldCheck className="size-4" /> Submit QC inspection
+                    </Button>
+                  )}
+                </div>
                 {canMarkTax && (
                   <Button
                     className="w-full bg-emerald-700 hover:bg-emerald-800"
@@ -198,6 +205,50 @@ function GrnDetailDialog({ id, onOpenChange, user }: { id: string | null; onOpen
           </ScrollArea>
         </DialogContent>
       </Dialog>
+      {g && (
+        <SlipDialog open={slipOpen} onOpenChange={setSlipOpen} title={`GRN ${g.grnNo}`}>
+          <SlipDocument
+            title="GOODS RECEIVING NOTE"
+            documentNo={g.grnNo}
+            date={formatDate(g.receivedAt)}
+            status={(g.status || "").replace(/_/g, " ")}
+            fromName="Al Gurg Group"
+            fromAddress="Store Department, Al Quoz Industrial Area 3, Dubai, UAE"
+            fromContact="store@algurggroup.ae  |  +971 4 000 0000"
+            toLabel="Supplier"
+            toName={g.lpo?.supplier?.name ?? "-"}
+            toAddress={g.lpo?.supplier?.contactPerson ? `Attn: ${g.lpo.supplier.contactPerson}` : ""}
+            toContact={
+              [g.lpo?.supplier?.phone, g.lpo?.supplier?.email]
+                .filter(Boolean)
+                .join("  |  ") || ""
+            }
+            infoRows={[
+              { label: "GRN no", value: g.grnNo },
+              { label: "LPO no", value: g.lpo?.lpoNo ?? "-" },
+              { label: "Supplier", value: g.lpo?.supplier?.name ?? "-" },
+              { label: "Project", value: g.project?.name ?? "-" },
+              { label: "Received date", value: formatDate(g.receivedAt) },
+              { label: "Store keeper", value: g.storeUser?.name ?? "-" },
+              { label: "Tax invoice no", value: g.taxInvoiceNo || "-" },
+              { label: "QC report", value: g.qcReport?.reportNo ?? "-" },
+            ]}
+            items={{
+              headers: ["#", "Document", "Submitted"],
+              rows: [
+                [1, "Delivery note", docs.includes("deliveryNote") ? "YES" : "NO"],
+                [2, "Tax invoice", docs.includes("taxInvoice") ? "YES" : "NO"],
+                [3, "LPO copy", docs.includes("lpo") ? "YES" : "NO"],
+              ],
+            }}
+            notes={
+              g.remarks ||
+              "Goods received in good condition unless otherwise noted. This GRN authorises the supplier invoice for processing by the Finance Department."
+            }
+            signatures={["Store Keeper", "QC Head"]}
+          />
+        </SlipDialog>
+      )}
       {qcOpen && g && (
         <QcReportFormDialog
           open={qcOpen}

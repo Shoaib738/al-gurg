@@ -1,0 +1,832 @@
+     1→// Al Gurg Furniture Group - Production and Operations Management System
+     2→// Complete schema covering Enquiry, Estimation, Quotation, Approval, Order,
+     3→// BOQ, Procurement (MRQ, PR, LPO), QC, Store (GRN), Production (Joinery and Metal
+     4→// with QC gates), Drawing, Delivery, Installation and Feedback.
+     5→//
+     6→// DATABASE PROVIDER
+     7→// This schema works with SQLite (development default) or PostgreSQL/MySQL (production).
+     8→// To switch to PostgreSQL change provider below to "postgresql" and set
+     9→// DATABASE_URL to your production connection string, then run bun run db:push.
+    10→
+    11→generator client {
+    12→  provider = "prisma-client-js"
+    13→}
+    14→
+    15→datasource db {
+    16→  // Change to "postgresql" or "mysql" for production deployments.
+    17→  provider = "sqlite"
+    18→  url      = env("DATABASE_URL")
+    19→}
+    20→
+    21→// =====================================================
+    22→// USERS, ROLES & DEPARTMENTS
+    23→// =====================================================
+    24→
+    25→enum UserRole {
+    26→  ADMIN
+    27→  BUSINESS_MANAGER
+    28→  ESTIMATION
+    29→  SALES
+    30→  PROCUREMENT
+    31→  STORE
+    32→  QC
+    33→  PRODUCTION
+    34→  ENGINEERING
+    35→  PROJECT
+    36→  FINANCE
+    37→}
+    38→
+    39→model User {
+    40→  id           String   @id @default(cuid())
+    41→  loginId      String?  @unique
+    42→  email        String   @unique
+    43→  name         String
+    44→  role         UserRole
+    45→  phone        String?
+    46→  whatsapp     String?
+    47→  avatar       String?
+    48→  passwordHash String?
+    49→  isActive     Boolean  @default(true)
+    50→  lastLoginAt  DateTime?
+    51→  createdAt    DateTime @default(now())
+    52→  updatedAt    DateTime @updatedAt
+    53→
+    54→  // relations
+    55→  enquiries           Enquiry[]           @relation("EnquirySales")
+    56→  quotations          Quotation[]         @relation("QuotationCreator")
+    57→  approvals           Quotation[]         @relation("QuotationApprover")
+    58→  quotationComments   QuotationComment[]
+    59→  boqs                Boq[]
+    60→  mrqs                MaterialRequisition[] @relation("MrqCreator")
+    61→  supplierQuotes      SupplierQuote[]     @relation("SupplierQuoteApprover")
+    62→  supplierQuotesReq   SupplierQuote[]     @relation("SupplierQuoteCreator")
+    63→  prs                 PurchaseRequest[]
+    64→  lpos                LocalPurchaseOrder[]
+    65→  grns                GoodsReceivingNote[]
+    66→  qcReports           QcReport[]
+    67→  productionOrders    ProductionOrder[]   @relation("ProdOrderReleaser")
+    68→  stageOps            ProductionStage[]   @relation("StageOperator")
+    69→  drawings            DrawingSubmission[] @relation("DrawingCreator")
+    70→  drawingApprover     DrawingSubmission[] @relation("DrawingApprover")
+    71→  deliveries          DeliveryAcknowledgement[]
+    72→  installations       InstallationRecord[]
+    73→  feedbacks           CustomerFeedback[]
+    74→  paymentLinks        PaymentLink[]
+    75→  redFlags            RedFlag[]
+    76→  delays              DelayComplaint[]
+    77→  notifications       Notification[]
+    78→  timelineEvents      TimelineEvent[]
+    79→  approvalReviews     ApprovalLog[]
+    80→  uploads             UploadedFile[]
+    81→}
+    82→
+    83→// =====================================================
+    84→// CLIENTS & SUPPLIERS
+    85→// =====================================================
+    86→
+    87→enum ClientType {
+    88→  RETAIL
+    89→  PROJECT
+    90→}
+    91→
+    92→model Client {
+    93→  id          String     @id @default(cuid())
+    94→  name        String
+    95→  type        ClientType
+    96→  company     String?
+    97→  contactPerson String?
+    98→  email       String?
+    99→  phone       String?
+   100→  whatsapp    String?
+   101→  address     String?
+   102→  createdAt   DateTime   @default(now())
+   103→  updatedAt   DateTime   @updatedAt
+   104→
+   105→  enquiries   Enquiry[]
+   106→  quotations  Quotation[]
+   107→  projects    Project[]
+   108→}
+   109→
+   110→model Supplier {
+   111→  id        String   @id @default(cuid())
+   112→  name      String
+   113→  contactPerson String?
+   114→  email     String?
+   115→  phone     String?
+   116→  whatsapp  String?
+   117→  materials String?  // comma-separated materials supplied
+   118→  createdAt DateTime @default(now())
+   119→  updatedAt DateTime @updatedAt
+   120→
+   121→  materialsRef Material[]
+   122→  supplierQuotes SupplierQuote[]
+   123→  prs          PurchaseRequest[]
+   124→  lpos         LocalPurchaseOrder[]
+   125→}
+   126→
+   127→model Material {
+   128→  id          String   @id @default(cuid())
+   129→  name        String
+   130→  spec        String?  // thickness / grade / finish
+   131→  unit        String   // sqm / meter / piece / sheet
+   132→  unitPrice   Float
+   133→  supplierId  String
+   134→  supplier    Supplier @relation(fields: [supplierId], references: [id])
+   135→  inStock     Boolean  @default(true)
+   136→  createdAt   DateTime @default(now())
+   137→  updatedAt   DateTime @updatedAt
+   138→
+   139→  boqItems    BoqItem[]
+   140→  mrqItems    MaterialRequisitionItem[]
+   141→}
+   142→
+   143→// =====================================================
+   144→// ENQUIRY
+   145→// =====================================================
+   146→
+   147→enum EnquiryStatus {
+   148→  NEW
+   149→  IN_ESTIMATION
+   150→  QUOTED
+   151→  CONFIRMED
+   152→  LOST
+   153→  ON_HOLD
+   154→}
+   155→
+   156→enum EnquirySource {
+   157→  EMAIL
+   158→  WHATSAPP
+   159→  PHONE
+   160→  WALK_IN
+   161→}
+   162→
+   163→model Enquiry {
+   164→  id           String         @id @default(cuid())
+   165→  enquiryNo    String         @unique
+   166→  enquiryDate  DateTime       @default(now())
+   167→  source       EnquirySource  @default(EMAIL)
+   168→  clientId     String
+   169→  client       Client         @relation(fields: [clientId], references: [id])
+   170→  salesUserId  String
+   171→  salesUser    User           @relation("EnquirySales", fields: [salesUserId], references: [id])
+   172→  title        String
+   173→  description  String
+   174→  projectType  String?  // wardrobe / kitchen / vanity / door etc.
+   175→  location     String?
+   176→  attachments  String?  // JSON array of file names
+   177→  status       EnquiryStatus  @default(NEW)
+   178→  createdAt    DateTime       @default(now())
+   179→  updatedAt    DateTime       @updatedAt
+   180→
+   181→  quotations   Quotation[]
+   182→  projects     Project[]
+   183→  timeline     TimelineEvent[]
+   184→}
+   185→
+   186→// =====================================================
+   187→// QUOTATION
+   188→// =====================================================
+   189→
+   190→enum QuotationStatus {
+   191→  DRAFT
+   192→  PENDING_APPROVAL
+   193→  APPROVED
+   194→  REJECTED
+   195→  SENT_TO_CLIENT
+   196→  SIGNED_CONFIRMED
+   197→  PAYMENT_LINK_SENT
+   198→  PAID
+   199→  LPO_RECEIVED
+   200→  ORDER_RELEASED
+   201→}
+   202→
+   203→model Quotation {
+   204→  id              String   @id @default(cuid())
+   205→  quotationNo     String   @unique
+   206→  enquiryId       String
+   207→  enquiry         Enquiry  @relation(fields: [enquiryId], references: [id])
+   208→  clientId        String
+   209→  client          Client   @relation(fields: [clientId], references: [id])
+   210→  createdBy       String
+   211→  creator         User     @relation("QuotationCreator", fields: [createdBy], references: [id])
+   212→  template        String   @default("standard")
+   213→  validity        Int      @default(30) // days
+   214→  deliveryWeeks   Int      @default(4)
+   215→  paymentTerms    String   @default("50% advance, 50% before delivery")
+   216→  warranty        String   @default("2 years")
+   217→  subtotal        Float    @default(0)
+   218→  discount        Float    @default(0)
+   219→  vat             Float    @default(0)
+   220→  total           Float    @default(0)
+   221→  status          QuotationStatus @default(DRAFT)
+   222→  approvedBy      String?
+   223→  approver        User?    @relation("QuotationApprover", fields: [approvedBy], references: [id])
+   224→  approvedAt      DateTime?
+   225→  sentAt          DateTime?
+   226→  signedAt        DateTime?
+   227→  notes           String?
+   228→  createdAt       DateTime @default(now())
+   229→  updatedAt       DateTime @updatedAt
+   230→
+   231→  items           QuotationItem[]
+   232→  comments        QuotationComment[]
+   233→  attachments     QuotationAttachment[]
+   234→  approvalLogs    ApprovalLog[]
+   235→  paymentLinks    PaymentLink[]
+   236→  projects        Project[]
+   237→  boqs            Boq[]
+   238→  timeline        TimelineEvent[]
+   239→}
+   240→
+   241→model QuotationItem {
+   242→  id            String    @id @default(cuid())
+   243→  quotationId   String
+   244→  quotation     Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+   245→  lineNumber    Int
+   246→  description   String
+   247→  spec          String?   // quality / specification
+   248→  referenceImage String?  // image URL / link
+   249→  detailLink    String?   // external detail link
+   250→  qty           Float
+   251→  unit          String    // meter / sqm / piece
+   252→  material      String?
+   253→  materialCost  Float     @default(0)
+   254→  laborHours    Float     @default(0)
+   255→  laborRate     Float     @default(0)
+   256→  productionHours Float   @default(0)
+   257→  installationHours Float @default(0)
+   258→  unitPrice     Float     @default(0)
+   259→  total         Float     @default(0)
+   260→}
+   261→
+   262→model QuotationComment {
+   263→  id           String   @id @default(cuid())
+   264→  quotationId  String
+   265→  quotation    Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+   266→  userId       String
+   267→  user         User     @relation(fields: [userId], references: [id])
+   268→  text         String
+   269→  createdAt    DateTime @default(now())
+   270→}
+   271→
+   272→model QuotationAttachment {
+   273→  id           String   @id @default(cuid())
+   274→  quotationId  String
+   275→  quotation    Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+   276→  name         String
+   277→  url          String
+   278→  type         String?  // image / pdf / drawing
+   279→}
+   280→
+   281→model ApprovalLog {
+   282→  id           String   @id @default(cuid())
+   283→  quotationId  String?
+   284→  quotation    Quotation? @relation(fields: [quotationId], references: [id])
+   285→  userId       String
+   286→  user         User     @relation(fields: [userId], references: [id])
+   287→  action       String   // submitted / approved / rejected / commented / edited
+   288→  comment      String?
+   289→  createdAt    DateTime @default(now())
+   290→}
+   291→
+   292→// =====================================================
+   293→// PROJECT (after order confirmed)
+   294→// =====================================================
+   295→
+   296→enum ProjectStatus {
+   297→  ORDER_RELEASED
+   298→  IN_PLANNING
+   299→  IN_PROCUREMENT
+   300→  IN_ENGINEERING
+   301→  IN_PRODUCTION
+   302→  QC_IN_PROGRESS
+   303→  READY_FOR_DELIVERY
+   304→  DELIVERED
+   305→  IN_INSTALLATION
+   306→  INSTALLED
+   307→  FEEDBACK_PENDING
+   308→  COMPLETED
+   309→  ON_HOLD
+   310→  CANCELLED
+   311→}
+   312→
+   313→model Project {
+   314→  id           String   @id @default(cuid())
+   315→  projectNo    String   @unique
+   316→  name         String
+   317→  enquiryId    String?
+   318→  enquiry      Enquiry? @relation(fields: [enquiryId], references: [id])
+   319→  quotationId  String?
+   320→  quotation    Quotation? @relation(fields: [quotationId], references: [id])
+   321→  clientId     String
+   322→  client       Client   @relation(fields: [clientId], references: [id])
+   323→  type         ClientType @default(PROJECT)
+   324→  startDate    DateTime?
+   325→  dueDate      DateTime?
+   326→  deliveryDate DateTime?
+   327→  status       ProjectStatus @default(ORDER_RELEASED)
+   328→  createdAt    DateTime @default(now())
+   329→  updatedAt    DateTime @updatedAt
+   330→
+   331→  boqs                Boq[]
+   332→  mrqs                MaterialRequisition[]
+   333→  prs                 PurchaseRequest[]
+   334→  lpos                LocalPurchaseOrder[]
+   335→  grns                GoodsReceivingNote[]
+   336→  productionOrders    ProductionOrder[]
+   337→  drawings            DrawingSubmission[]
+   338→  deliveryAck         DeliveryAcknowledgement?
+   339→  installation        InstallationRecord?
+   340→  feedback            CustomerFeedback?
+   341→  paymentLinks        PaymentLink[]
+   342→  redFlags            RedFlag[]
+   343→  delays              DelayComplaint[]
+   344→  timeline            TimelineEvent[]
+   345→}
+   346→
+   347→// =====================================================
+   348→// Boq (Bill of Quantity - Material)
+   349→// =====================================================
+   350→
+   351→enum BoqStatus {
+   352→  DRAFT
+   353→  ISSUED_TO_PROCUREMENT
+   354→  IN_PROCUREMENT
+   355→  COMPLETED
+   356→}
+   357→
+   358→model Boq {
+   359→  id           String   @id @default(cuid())
+   360→  boqNo        String   @unique
+   361→  projectId    String
+   362→  project      Project  @relation(fields: [projectId], references: [id])
+   363→  quotationId  String?
+   364→  quotation    Quotation? @relation(fields: [quotationId], references: [id])
+   365→  issuedBy     String
+   366→  issuer       User     @relation(fields: [issuedBy], references: [id])
+   367→  status       BoqStatus @default(DRAFT)
+   368→  issuedAt     DateTime?
+   369→  createdAt    DateTime @default(now())
+   370→  updatedAt    DateTime @updatedAt
+   371→
+   372→  items        BoqItem[]
+   373→}
+   374→
+   375→model BoqItem {
+   376→  id          String   @id @default(cuid())
+   377→  boqId       String
+   378→  boq         Boq      @relation(fields: [boqId], references: [id], onDelete: Cascade)
+   379→  materialId  String?
+   380→  material    Material? @relation(fields: [materialId], references: [id])
+   381→  description String
+   382→  spec        String?
+   383→  qty         Float
+   384→  unit        String
+   385→  available   Boolean  @default(true)
+   386→  notes       String?
+   387→}
+   388→
+   389→// =====================================================
+   390→// PROCUREMENT: MRQ → Supplier Quote → PR → LPO → GRN
+   391→// =====================================================
+   392→
+   393→enum MrqStatus {
+   394→  DRAFT
+   395→  SUBMITTED
+   396→  QUOTED
+   397→  APPROVED
+   398→  CONVERTED_TO_PR
+   399→}
+   400→
+   401→model MaterialRequisition {
+   402→  id          String    @id @default(cuid())
+   403→  mrqNo       String    @unique
+   404→  projectId   String
+   405→  project     Project   @relation(fields: [projectId], references: [id])
+   406→  boqId       String?
+   407→  createdById String
+   408→  creator     User      @relation("MrqCreator", fields: [createdById], references: [id])
+   409→  status      MrqStatus @default(DRAFT)
+   410→  createdAt   DateTime  @default(now())
+   411→  updatedAt   DateTime  @updatedAt
+   412→
+   413→  items       MaterialRequisitionItem[]
+   414→  supplierQuotes SupplierQuote[]
+   415→  prs         PurchaseRequest[]
+   416→}
+   417→
+   418→model MaterialRequisitionItem {
+   419→  id          String   @id @default(cuid())
+   420→  mrqId       String
+   421→  mrq         MaterialRequisition @relation(fields: [mrqId], references: [id], onDelete: Cascade)
+   422→  materialId  String?
+   423→  material    Material? @relation(fields: [materialId], references: [id])
+   424→  description String
+   425→  spec        String?
+   426→  qty         Float
+   427→  unit        String
+   428→  quotedPrice Float?
+   429→}
+   430→
+   431→model SupplierQuote {
+   432→  id           String   @id @default(cuid())
+   433→  supplierId   String
+   434→  supplier     Supplier @relation(fields: [supplierId], references: [id])
+   435→  mrqId        String
+   436→  mrq          MaterialRequisition @relation(fields: [mrqId], references: [id])
+   437→  requestedById String
+   438→  requester    User     @relation("SupplierQuoteCreator", fields: [requestedById], references: [id])
+   439→  approvedById String?
+   440→  approver     User?    @relation("SupplierQuoteApprover", fields: [approvedById], references: [id])
+   441→  approvedAt   DateTime?
+   442→  totalAmount  Float    @default(0)
+   443→  deliveryDays Int      @default(7)
+   444→  status       String   @default("PENDING") // PENDING / APPROVED / REJECTED
+   445→  remarks      String?
+   446→  createdAt    DateTime @default(now())
+   447→  updatedAt    DateTime @updatedAt
+   448→
+   449→  prs          PurchaseRequest[]
+   450→}
+   451→
+   452→model PurchaseRequest {
+   453→  id           String   @id @default(cuid())
+   454→  prNo         String   @unique
+   455→  projectId    String
+   456→  project      Project  @relation(fields: [projectId], references: [id])
+   457→  mrqId        String?
+   458→  mrq          MaterialRequisition? @relation(fields: [mrqId], references: [id])
+   459→  supplierQuoteId String?
+   460→  supplierQuote SupplierQuote? @relation(fields: [supplierQuoteId], references: [id])
+   461→  supplierId   String
+   462→  supplier     Supplier @relation(fields: [supplierId], references: [id])
+   463→  createdById  String
+   464→  creator      User     @relation(fields: [createdById], references: [id])
+   465→  sapRef       String?
+   466→  status       String   @default("PENDING") // PENDING / APPROVED / CONVERTED_TO_LPO
+   467→  approvedAt   DateTime?
+   468→  totalAmount  Float    @default(0)
+   469→  itemsJson    String   // JSON of items
+   470→  createdAt    DateTime @default(now())
+   471→  updatedAt    DateTime @updatedAt
+   472→
+   473→  lpos         LocalPurchaseOrder[]
+   474→}
+   475→
+   476→model LocalPurchaseOrder {
+   477→  id           String   @id @default(cuid())
+   478→  lpoNo        String   @unique
+   479→  prId         String
+   480→  pr           PurchaseRequest @relation(fields: [prId], references: [id])
+   481→  projectId    String
+   482→  project      Project  @relation(fields: [projectId], references: [id])
+   483→  supplierId   String
+   484→  supplier     Supplier @relation(fields: [supplierId], references: [id])
+   485→  createdById  String
+   486→  creator      User     @relation(fields: [createdById], references: [id])
+   487→  totalAmount  Float    @default(0)
+   488→  status       String   @default("ISSUED") // ISSUED / SENT_TO_SUPPLIER / DELIVERED / PARTIAL / CLOSED
+   489→  sentAt       DateTime?
+   490→  expectedDelivery DateTime?
+   491→  deliveredAt  DateTime?
+   492→  createdAt    DateTime @default(now())
+   493→  updatedAt    DateTime @updatedAt
+   494→
+   495→  grns         GoodsReceivingNote[]
+   496→}
+   497→
+   498→model GoodsReceivingNote {
+   499→  id           String   @id @default(cuid())
+   500→  grnNo        String   @unique
+   501→  lpoId        String
+   502→  lpo          LocalPurchaseOrder @relation(fields: [lpoId], references: [id])
+   503→  projectId    String
+   504→  project      Project  @relation(fields: [projectId], references: [id])
+   505→  storeUserId  String
+   506→  storeUser    User     @relation(fields: [storeUserId], references: [id])
+   507→  qcReportId   String?  @unique
+   508→  qcReport     QcReport? @relation(fields: [qcReportId], references: [id])
+   509→  documentsReceived String? // JSON: deliveryNote/taxInvoice/lpo
+   510→  taxInvoiceNo String?
+   511→  taxInvoiceDate DateTime?
+   512→  taxInvoiceSubmitted Boolean @default(false)
+   513→  remarks      String?
+   514→  status       String   @default("RECEIVED") // RECEIVED / QC_PENDING / QC_PASSED / QC_FAILED / INVOICED
+   515→  receivedAt   DateTime @default(now())
+   516→  createdAt    DateTime @default(now())
+   517→  updatedAt    DateTime @updatedAt
+   518→}
+   519→
+   520→// =====================================================
+   521→// QC REPORTS (delivery + production stages)
+   522→// =====================================================
+   523→
+   524→enum QcReportType {
+   525→  DELIVERY_INSPECTION
+   526→  PRODUCTION_STAGE
+   527→  INSTALLATION_INSPECTION
+   528→}
+   529→
+   530→model QcReport {
+   531→  id           String   @id @default(cuid())
+   532→  reportNo     String   @unique
+   533→  type         QcReportType
+   534→  refType      String   // LPO / ProductionStage / Installation
+   535→  refId        String
+   536→  grn          GoodsReceivingNote?
+   537→  installation InstallationRecord?
+   538→  productionStageId String?
+   539→  qcUserId     String
+   540→  qcUser       User     @relation(fields: [qcUserId], references: [id])
+   541→  inspectionDate DateTime @default(now())
+   542→  status       String   @default("PENDING") // PENDING / PASSED / FAILED / PARTIAL / REWORK
+   543→  photos       String?  // JSON array
+   544→  remarks      String?
+   545→  missingItems String?  // JSON array
+   546→  checklistJson String? // JSON of checklist items
+   547→  submittedAt  DateTime?
+   548→  createdAt    DateTime @default(now())
+   549→  updatedAt    DateTime @updatedAt
+   550→
+   551→  productionStages ProductionStage[]
+   552→}
+   553→
+   554→// =====================================================
+   555→// PRODUCTION: Joinery (9 steps) & Metal (5 steps)
+   556→// =====================================================
+   557→
+   558→enum ProductionType {
+   559→  JOINERY
+   560→  METAL
+   561→}
+   562→
+   563→enum StageStatus {
+   564→  NOT_STARTED
+   565→  IN_PROGRESS
+   566→  QC_PENDING
+   567→  QC_PASSED
+   568→  QC_FAILED
+   569→  SKIPPED
+   570→  COMPLETED
+   571→}
+   572→
+   573→model ProductionOrder {
+   574→  id           String   @id @default(cuid())
+   575→  orderNo      String   @unique
+   576→  projectId    String
+   577→  project      Project  @relation(fields: [projectId], references: [id])
+   578→  type         ProductionType
+   579→  releasedBy   String
+   580→  releaser     User     @relation("ProdOrderReleaser", fields: [releasedBy], references: [id])
+   581→  drawingApproved Boolean @default(false)
+   582→  releasedAt   DateTime @default(now())
+   583→  dueDate      DateTime?
+   584→  status       String   @default("RELEASED") // RELEASED / IN_PROGRESS / COMPLETED
+   585→  createdAt    DateTime @default(now())
+   586→  updatedAt    DateTime @updatedAt
+   587→
+   588→  stages       ProductionStage[]
+   589→}
+   590→
+   591→model ProductionStage {
+   592→  id           String   @id @default(cuid())
+   593→  productionOrderId String
+   594→  productionOrder ProductionOrder @relation(fields: [productionOrderId], references: [id], onDelete: Cascade)
+   595→  stageName    String
+   596→  stageOrder   Int
+   597→  operatorId   String?
+   598→  operator     User?    @relation("StageOperator", fields: [operatorId], references: [id])
+   599→  status       StageStatus @default(NOT_STARTED)
+   600→  startedAt    DateTime?
+   601→  completedAt  DateTime?
+   602→  qcReportId   String?
+   603→  qcReport     QcReport? @relation(fields: [qcReportId], references: [id])
+   604→  remarks      String?
+   605→  createdAt    DateTime @default(now())
+   606→  updatedAt    DateTime @updatedAt
+   607→}
+   608→
+   609→// =====================================================
+   610→// DRAWING / ENGINEERING
+   611→// =====================================================
+   612→
+   613→enum DrawingStatus {
+   614→  DRAFT
+   615→  SUBMITTED_TO_PM
+   616→  SUBMITTED_TO_SALES
+   617→  SUBMITTED_TO_CLIENT
+   618→  APPROVED
+   619→  REJECTED
+   620→  REWORK
+   621→}
+   622→
+   623→model DrawingSubmission {
+   624→  id           String   @id @default(cuid())
+   625→  drawingNo    String   @unique
+   626→  projectId    String
+   627→  project      Project  @relation(fields: [projectId], references: [id])
+   628→  drawnById    String
+   629→  drawnBy      User     @relation("DrawingCreator", fields: [drawnById], references: [id])
+   630→  drawingType  String   // elevation / shop drawing / assembly / detail
+   631→  approvedById String?
+   632→  approver     User?    @relation("DrawingApprover", fields: [approvedById], references: [id])
+   633→  approvedByClientAt DateTime?
+   634→  status       DrawingStatus @default(DRAFT)
+   635→  attachmentsJson String?  // JSON array of file names
+   636→  remarks      String?
+   637→  createdAt    DateTime @default(now())
+   638→  updatedAt    DateTime @updatedAt
+   639→}
+   640→
+   641→// =====================================================
+   642→// DELIVERY & INSTALLATION & FEEDBACK
+   643→// =====================================================
+   644→
+   645→model DeliveryAcknowledgement {
+   646→  id           String   @id @default(cuid())
+   647→  projectId    String   @unique
+   648→  project      Project  @relation(fields: [projectId], references: [id])
+   649→  deliveredAt  DateTime @default(now())
+   650→  deliveredBy  String
+   651→  deliverer    User     @relation(fields: [deliveredBy], references: [id])
+   652→  clientSigned Boolean  @default(false)
+   653→  clientSignature String?
+   654→  remarks      String?
+   655→  createdAt    DateTime @default(now())
+   656→  updatedAt    DateTime @updatedAt
+   657→}
+   658→
+   659→model InstallationRecord {
+   660→  id           String   @id @default(cuid())
+   661→  projectId    String   @unique
+   662→  project      Project  @relation(fields: [projectId], references: [id])
+   663→  teamLeadId   String
+   664→  teamLead     User     @relation(fields: [teamLeadId], references: [id])
+   665→  startedAt    DateTime?
+   666→  completedAt  DateTime?
+   667→  inspectionReportId String?  @unique
+   668→  inspection   QcReport? @relation(fields: [inspectionReportId], references: [id])
+   669→  status       String   @default("SCHEDULED") // SCHEDULED / IN_PROGRESS / COMPLETED / INSPECTED
+   670→  remarks      String?
+   671→  createdAt    DateTime @default(now())
+   672→  updatedAt    DateTime @updatedAt
+   673→}
+   674→
+   675→model CustomerFeedback {
+   676→  id           String   @id @default(cuid())
+   677→  projectId    String   @unique
+   678→  project      Project  @relation(fields: [projectId], references: [id])
+   679→  submittedById String?
+   680→  submitter    User?    @relation(fields: [submittedById], references: [id])
+   681→  ratingsJson  String   // JSON of {quality, timeliness, installation, communication, overall}
+   682→  comments     String?
+   683→  recommendation String?
+   684→  submittedAt  DateTime @default(now())
+   685→  createdAt    DateTime @default(now())
+   686→  updatedAt    DateTime @updatedAt
+   687→}
+   688→
+   689→// =====================================================
+   690→// PAYMENT
+   691→// =====================================================
+   692→
+   693→enum PaymentLinkStatus {
+   694→  GENERATED
+   695→  SENT
+   696→  PAID
+   697→  EXPIRED
+   698→}
+   699→
+   700→model PaymentLink {
+   701→  id           String   @id @default(cuid())
+   702→  projectId    String
+   703→  project      Project  @relation(fields: [projectId], references: [id])
+   704→  quotationId  String?
+   705→  quotation    Quotation? @relation(fields: [quotationId], references: [id])
+   706→  amount       Float
+   707→  linkRef      String   @unique
+   708→  status       PaymentLinkStatus @default(GENERATED)
+   709→  generatedById String
+   710→  generator    User     @relation(fields: [generatedById], references: [id])
+   711→  generatedAt  DateTime @default(now())
+   712→  sentAt       DateTime?
+   713→  paidAt       DateTime?
+   714→  createdAt    DateTime @default(now())
+   715→  updatedAt    DateTime @updatedAt
+   716→}
+   717→
+   718→// =====================================================
+   719→// RED FLAG & DELAY COMPLAINTS
+   720→// =====================================================
+   721→
+   722→enum RedFlagSeverity {
+   723→  LOW
+   724→  MEDIUM
+   725→  HIGH
+   726→  CRITICAL
+   727→}
+   728→
+   729→model RedFlag {
+   730→  id           String   @id @default(cuid())
+   731→  projectId    String
+   732→  project      Project  @relation(fields: [projectId], references: [id])
+   733→  raisedById   String
+   734→  raiser       User     @relation(fields: [raisedById], references: [id])
+   735→  department   String
+   736→  reason       String
+   737→  severity     RedFlagSeverity @default(MEDIUM)
+   738→  daysDelayed  Int      @default(0)
+   739→  resolved     Boolean  @default(false)
+   740→  resolvedAt   DateTime?
+   741→  resolvedById String?
+   742→  resolution   String?
+   743→  createdAt    DateTime @default(now())
+   744→  updatedAt    DateTime @updatedAt
+   745→}
+   746→
+   747→model DelayComplaint {
+   748→  id           String   @id @default(cuid())
+   749→  projectId    String
+   750→  project      Project  @relation(fields: [projectId], references: [id])
+   751→  raisedById   String
+   752→  raiser       User     @relation(fields: [raisedById], references: [id])
+   753→  department   String
+   754→  reason       String
+   755→  daysDelayed  Int
+   756→  status       String   @default("OPEN") // OPEN / IN_REVIEW / RESOLVED
+   757→  resolution   String?
+   758→  resolvedAt   DateTime?
+   759→  createdAt    DateTime @default(now())
+   760→  updatedAt    DateTime @updatedAt
+   761→}
+   762→
+   763→// =====================================================
+   764→// TIMELINE & NOTIFICATIONS
+   765→// =====================================================
+   766→
+   767→model TimelineEvent {
+   768→  id           String   @id @default(cuid())
+   769→  projectId    String?
+   770→  project      Project? @relation(fields: [projectId], references: [id])
+   771→  enquiryId    String?
+   772→  enquiry      Enquiry? @relation(fields: [enquiryId], references: [id])
+   773→  quotationId  String?
+   774→  quotation    Quotation? @relation(fields: [quotationId], references: [id])
+   775→  userId       String?
+   776→  user         User?    @relation(fields: [userId], references: [id])
+   777→  stage        String
+   778→  message      String
+   779→  createdAt    DateTime @default(now())
+   780→}
+   781→
+   782→model Notification {
+   783→  id           String   @id @default(cuid())
+   784→  userId       String
+   785→  user         User     @relation(fields: [userId], references: [id])
+   786→  type         String
+   787→  title        String
+   788→  message      String
+   789→  refType      String?
+   790→  refId        String?
+   791→  read         Boolean  @default(false)
+   792→  createdAt    DateTime @default(now())
+   793→}
+   794→
+   795→// =====================================================
+   796→// EMAIL OUTBOUND LOG (SMTP integration record)
+   797→// =====================================================
+   798→
+   799→model EmailLog {
+   800→  id           String   @id @default(cuid())
+   801→  toAddress    String
+   802→  ccAddresses  String?  // comma separated
+   803→  subject      String
+   804→  body         String
+   805→  refType      String?  // e.g. ORDER_RELEASE, LPO_SENT, QC_REPORT
+   806→  refId        String?
+   807→  status       String   @default("SENT") // SENT, FAILED, QUEUED
+   808→  errorMessage String?
+   809→  sentAt       DateTime @default(now())
+   810→  createdAt    DateTime @default(now())
+   811→}
+   812→
+   813→// =====================================================
+   814→// FILE UPLOADS (drawings, reference images, QC photos)
+   815→// =====================================================
+   816→
+   817→model UploadedFile {
+   818→  id           String   @id @default(cuid())
+   819→  filename     String   // original filename
+   820→  storedName   String   // unique stored filename on disk
+   821→  mimeType     String
+   822→  size         Int      // bytes
+   823→  url          String   // public url path
+   824→  uploadedById String?
+   825→  category     String?  // drawing, reference-image, qc-photo, attachment
+   826→  refType      String?  // optional link to entity type
+   827→  refId        String?  // optional link to entity id
+   828→  createdAt    DateTime @default(now())
+   829→
+   830→  uploader     User?    @relation(fields: [uploadedById], references: [id])
+   831→}
+   832→

@@ -17,9 +17,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ShieldCheck, ClipboardCheck, FileText } from "lucide-react";
-import { formatDate, formatDateTime } from "@/lib/format";
+import { ShieldCheck, ClipboardCheck, FileText, Printer } from "lucide-react";
+import { formatDate, formatDateTime, parseJsonSafe } from "@/lib/format";
 import { toast } from "sonner";
+import { SlipDocument, SlipDialog } from "../slip-document";
 
 export function QcView({ user, tab }: { user: SessionUser; tab: string }) {
   const initialTab =
@@ -73,6 +74,11 @@ export function QcView({ user, tab }: { user: SessionUser; tab: string }) {
                   { key: "qcUser", header: "Inspector", render: (r: any) => r.qcUser?.name },
                   { key: "status", header: "Result", render: (r: any) => <StatusBadge status={r.status} /> },
                   { key: "createdAt", header: "Created", render: (r: any) => formatDate(r.createdAt) },
+                  {
+                    key: "action",
+                    header: "",
+                    render: (r: any) => <QcReportPrintButton report={r} />,
+                  },
                 ]}
               />
             </CardContent>
@@ -80,6 +86,85 @@ export function QcView({ user, tab }: { user: SessionUser; tab: string }) {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+function QcReportPrintButton({ report }: { report: any }) {
+  const [open, setOpen] = useState(false);
+  const { data: r, isLoading } = useDetail<any>("qc-report", open ? report.id : null);
+  const checklist: { item: string; status: string }[] = r
+    ? parseJsonSafe<typeof checklist>(r.checklistJson, [])
+    : [];
+  const missing: { item: string; ordered: number; received: number; missing: number }[] = r
+    ? parseJsonSafe<typeof missing>(r.missingItems, [])
+    : [];
+  return (
+    <>
+      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
+        <Printer className="size-3.5" /> Print
+      </Button>
+      <SlipDialog open={open} onOpenChange={setOpen} title={`QC ${report.reportNo}`}>
+        {isLoading || !r ? (
+          <p className="p-4 text-sm text-muted-foreground">Loading...</p>
+        ) : (
+          <SlipDocument
+            title="QC INSPECTION REPORT"
+            documentNo={r.reportNo}
+            date={formatDate(r.inspectionDate)}
+            status={(r.status || "").replace(/_/g, " ")}
+            fromName="Al Gurg Group"
+            fromAddress="Quality Control Department, Al Quoz Industrial Area 3, Dubai, UAE"
+            fromContact="qc@algurggroup.ae  |  +971 4 000 0000"
+            toLabel="Inspection Subject"
+            toName={
+              r.type === "DELIVERY_INSPECTION"
+                ? r.grn?.grnNo ?? "Delivery inspection"
+                : r.type === "PRODUCTION_STAGE"
+                  ? r.productionStages?.[0]?.stageName ?? "Production stage"
+                  : "Installation inspection"
+            }
+            toAddress={
+              r.productionStages?.[0]?.productionOrder?.orderNo
+                ? `Order: ${r.productionStages[0].productionOrder.orderNo}`
+                : ""
+            }
+            toContact=""
+            infoRows={[
+              { label: "Report no", value: r.reportNo },
+              {
+                label: "Inspection type",
+                value: (r.type || "").replace(/_/g, " "),
+              },
+              { label: "Inspection date", value: formatDateTime(r.inspectionDate) },
+              { label: "QC officer", value: r.qcUser?.name ?? "-" },
+              { label: "Status", value: (r.status || "").replace(/_/g, " ") },
+              { label: "Submitted at", value: formatDateTime(r.submittedAt) },
+            ]}
+            items={{
+              headers: ["#", "Checklist item", "Status"],
+              rows: checklist.map((c, idx) => [
+                idx + 1,
+                c.item,
+                (c.status || "").toUpperCase(),
+              ]),
+            }}
+            notes={
+              [
+                r.remarks ? `Remarks: ${r.remarks}` : null,
+                missing.length > 0
+                  ? `Missing items: ${missing
+                      .map((m) => `${m.item} (ordered ${m.ordered}, received ${m.received}, missing ${m.missing})`)
+                      .join("; ")}`
+                  : null,
+              ]
+                .filter(Boolean)
+                .join("\n") || undefined
+            }
+            signatures={["QC Officer"]}
+          />
+        )}
+      </SlipDialog>
+    </>
   );
 }
 

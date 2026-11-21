@@ -8,6 +8,7 @@ import { StatusBadge } from "../status-badge";
 import { TimelineStrip } from "../erp/timeline";
 import { EmailPreviewDialog } from "../erp/email-preview";
 import { QuotationForm } from "./quotation-form";
+import { SlipDocument, SlipDialog } from "../slip-document";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -67,6 +68,7 @@ export function QuotationDetail({
   const [rejectOpen, setRejectOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [emailPreview, setEmailPreview] = useState<any>(null);
+  const [slipOpen, setSlipOpen] = useState(false);
   const [comment, setComment] = useState("");
 
   if (isLoading || !q) {
@@ -92,8 +94,8 @@ export function QuotationDetail({
         <Button variant="ghost" size="sm" onClick={onBack}>
           <ArrowLeft className="size-4" /> Back to quotations
         </Button>
-        <Button variant="outline" size="sm" onClick={() => window.print()}>
-          <Printer className="size-4" /> Print
+        <Button variant="outline" size="sm" onClick={() => setSlipOpen(true)}>
+          <Printer className="size-4" /> Print Quotation
         </Button>
       </div>
 
@@ -411,6 +413,64 @@ export function QuotationDetail({
         onOpenChange={(v) => !v && setEmailPreview(null)}
         email={emailPreview}
       />
+
+      <SlipDialog
+        open={slipOpen}
+        onOpenChange={setSlipOpen}
+        title={`Quotation ${q.quotationNo}`}
+      >
+        <SlipDocument
+          title="QUOTATION"
+          documentNo={q.quotationNo}
+          date={formatDate(q.createdAt)}
+          status={q.status?.replace(/_/g, " ")}
+          fromName="Al Gurg Group"
+          fromAddress="Estimation Department, Al Quoz Industrial Area 3, Dubai, UAE"
+          fromContact="estimation@algurggroup.ae  |  +971 4 000 0000"
+          toLabel="Bill To"
+          toName={q.client?.name}
+          toAddress={[q.client?.company, q.client?.address].filter(Boolean).join(", ")}
+          toContact={[q.client?.phone, q.client?.email].filter(Boolean).join("  |  ")}
+          infoRows={[
+            { label: "Enquiry ref", value: q.enquiry?.enquiryNo ?? "-" },
+            { label: "Validity", value: `${q.validity} days` },
+            { label: "Delivery lead time", value: `${q.deliveryWeeks} weeks` },
+            { label: "Payment terms", value: q.paymentTerms },
+            { label: "Warranty", value: q.warranty },
+            { label: "Created by", value: q.creator?.name ?? "-" },
+            { label: "Approved by", value: q.approver?.name ?? "-" },
+            { label: "Approved at", value: formatDate(q.approvedAt) },
+          ]}
+          items={{
+            headers: ["#", "Description", "Spec", "Qty", "Unit", "Unit Price", "Total"],
+            amountColumnIndex: 6,
+            rows: (q.items ?? []).map((it: any) => [
+              it.lineNumber,
+              it.description + (it.material ? ` (${it.material})` : ""),
+              it.spec || "-",
+              it.qty,
+              it.unit,
+              formatCurrency(it.unitPrice),
+              formatCurrency(it.total),
+            ]),
+            totals: [
+              { label: "Subtotal", value: formatCurrency(q.subtotal) },
+              { label: "Discount", value: formatCurrency(q.discount) },
+              { label: "VAT (5%)", value: formatCurrency(q.vat) },
+              { label: "Grand total", value: formatCurrency(q.total) },
+            ],
+          }}
+          notes={
+            q.notes ||
+            "Includes site survey, shop drawings approval, packaging and delivery to site. Excludes electrical and MEP works."
+          }
+          signatures={[
+            "Prepared by (Estimation)",
+            "Approved by (Business Manager)",
+            "Client Signature",
+          ]}
+        />
+      </SlipDialog>
     </div>
   );
 }

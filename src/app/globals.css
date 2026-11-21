@@ -141,9 +141,35 @@
 }
 
 @media print {
+  /* Page geometry for clean PDF output */
+  @page {
+    margin: 1.5cm;
+  }
+
+  html,
+  body {
+    font-size: 11pt;
+    /* Preserve theme/background colors when printing */
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    background: #ffffff !important;
+  }
+
+  /* Hide every app chrome element that should not appear on the slip */
   body * {
     visibility: hidden;
   }
+
+  /* Hide the fixed footer, sidebar and topbar regardless of selectors */
+  footer,
+  [data-slot="sidebar"],
+  [data-slot="sidebar-wrapper"],
+  header,
+  [data-slot="dialog-overlay"] {
+    display: none !important;
+  }
+
+  /* Reveal only the print-area subtree */
   .print-area,
   .print-area * {
     visibility: visible;
@@ -152,8 +178,20 @@
     position: absolute;
     inset: 0;
     width: 100%;
+    margin: 0;
+    padding: 0;
+    box-shadow: none !important;
   }
+
+  /* Utility for buttons/controls to omit from print */
   .no-print {
     display: none !important;
+  }
+
+  /* Avoid breaking inside small blocks for tidier output */
+  .print-area table,
+  .print-area tr,
+  .print-area img {
+    page-break-inside: avoid;
   }
 }
