@@ -181,9 +181,9 @@ function AdminDashboard({
             <ScrollArea className="max-h-96">
               <div className="divide-y">
                 {(data?.recentTimeline ?? []).map((e: any) => (
-                  <div key={e.id} className="p-3">
-                    <p className="text-sm">{e.message}</p>
-                    <p className="text-xs text-muted-foreground">
+                  <div key={e.id} className="p-3 min-w-0">
+                    <p className="text-sm break-words overflow-hidden">{e.message}</p>
+                    <p className="text-xs text-muted-foreground break-words mt-0.5">
                       {e.project?.name ?? e.stage}, {formatRelativeTime(e.createdAt)}
                       {e.user?.name ? `, ${e.user.name}` : ""}
                     </p>
@@ -277,14 +277,14 @@ function BmDashboard({
               <ScrollArea className="max-h-80">
                 <div className="divide-y">
                   {redFlags.map((r: any) => (
-                    <div key={r.id} className="p-3">
+                    <div key={r.id} className="p-3 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-medium truncate">
+                        <p className="text-sm font-medium truncate min-w-0">
                           {r.project?.name}
                         </p>
                         <StatusBadge status={r.severity} />
                       </div>
-                      <p className="text-xs text-muted-foreground">{r.reason}</p>
+                      <p className="text-xs text-muted-foreground break-words mt-1">{r.reason}</p>
                     </div>
                   ))}
                 </div>
@@ -306,16 +306,16 @@ function BmDashboard({
               <ScrollArea className="max-h-80">
                 <div className="divide-y">
                   {delays.map((d: any) => (
-                    <div key={d.id} className="p-3">
+                    <div key={d.id} className="p-3 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-medium truncate">
+                        <p className="text-sm font-medium truncate min-w-0">
                           {d.project?.name}
                         </p>
                         <Badge variant="outline" className="text-[10px]">
                           {d.daysDelayed}d
                         </Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground">{d.reason}</p>
+                      <p className="text-xs text-muted-foreground break-words mt-1">{d.reason}</p>
                     </div>
                   ))}
                 </div>
