@@ -70,7 +70,7 @@ export function AppShell({ user }: { user: SessionUser }) {
     <div className="min-h-screen flex flex-col bg-background">
       <div className="flex flex-1 min-h-0">
         {/* Desktop sidebar */}
-        <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r bg-sidebar">
+        <aside className="hidden lg:flex sticky top-0 h-screen w-64 shrink-0 flex-col border-r bg-sidebar pb-12 overflow-hidden">
           <SidebarContent
             user={user}
             nav={nav}
@@ -178,7 +178,7 @@ function SidebarContent({
         </div>
       </div>
 
-      <ScrollArea className="flex-1 py-2">
+      <ScrollArea className="flex-1 min-h-0 py-2">
         <nav className="space-y-0.5 px-2">
           {nav.map((item) => {
             const Icon = item.icon;

@@ -76,9 +76,9 @@ export function ProjectDetail({
             <TabsTrigger value="store">Store</TabsTrigger>
             <TabsTrigger value="production">Production</TabsTrigger>
             <TabsTrigger value="engineering">Engineering</TabsTrigger>
-            <TabsTrigger value="delivery">Delivery/Install</TabsTrigger>
+            <TabsTrigger value="delivery">Delivery</TabsTrigger>
             <TabsTrigger value="feedback">Feedback</TabsTrigger>
-            <TabsTrigger value="flags">Flags &amp; Delays</TabsTrigger>
+            <TabsTrigger value="flags">Flags</TabsTrigger>
             <TabsTrigger value="timeline">Timeline</TabsTrigger>
           </TabsList>
         </ScrollArea>
