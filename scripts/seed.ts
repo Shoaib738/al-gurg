@@ -16,17 +16,17 @@ async function main() {
 
   // ---------- USERS ----------
   const users = {
-    admin: await db.user.create({ data: { email: 'admin@algurggroup.ae', name: 'System Administrator', role: UserRole.ADMIN, phone: '+971500000001', passwordHash } }),
-    mazen: await db.user.create({ data: { email: 'mazen@algurggroup.ae', name: 'Mr. Mazen Al Gurg', role: UserRole.BUSINESS_MANAGER, phone: '+971500000002', passwordHash } }),
-    roy: await db.user.create({ data: { email: 'roy@algurggroup.ae', name: 'Mr. Roy Mathew', role: UserRole.ESTIMATION, phone: '+971500000003', passwordHash } }),
-    sales: await db.user.create({ data: { email: 'sales@algurggroup.ae', name: 'Sales Team Lead', role: UserRole.SALES, phone: '+971500000004', passwordHash } }),
-    nimesha: await db.user.create({ data: { email: 'nimesha@algurggroup.ae', name: 'Ms. Nimesha Perera', role: UserRole.PROCUREMENT, phone: '+971500000005', passwordHash } }),
-    store: await db.user.create({ data: { email: 'store@algurggroup.ae', name: 'Store Keeper', role: UserRole.STORE, phone: '+971500000006', passwordHash } }),
-    venkat: await db.user.create({ data: { email: 'venkat@algurggroup.ae', name: 'Mr. Venketeswaram', role: UserRole.QC, phone: '+971500000007', passwordHash } }),
-    motasem: await db.user.create({ data: { email: 'motasem@algurggroup.ae', name: 'Mr. Motasem Al Rashid', role: UserRole.PRODUCTION, phone: '+971500000008', passwordHash } }),
-    draft: await db.user.create({ data: { email: 'draftsman@algurggroup.ae', name: 'Technical Drafter', role: UserRole.ENGINEERING, phone: '+971500000009', passwordHash } }),
-    wasim: await db.user.create({ data: { email: 'wasim@algurggroup.ae', name: 'Mr. Wasim Khan', role: UserRole.PROJECT, phone: '+971500000010', passwordHash } }),
-    finance: await db.user.create({ data: { email: 'finance@algurggroup.ae', name: 'Finance Officer', role: UserRole.FINANCE, phone: '+971500000011', passwordHash } }),
+    admin: await db.user.create({ data: { loginId: 'AG001', email: 'admin@algurggroup.ae', name: 'System Administrator', role: UserRole.ADMIN, phone: '+971500000001', passwordHash } }),
+    mazen: await db.user.create({ data: { loginId: 'AG002', email: 'mazen@algurggroup.ae', name: 'Mr. Mazen Al Gurg', role: UserRole.BUSINESS_MANAGER, phone: '+971500000002', passwordHash } }),
+    roy: await db.user.create({ data: { loginId: 'AG003', email: 'roy@algurggroup.ae', name: 'Mr. Roy Mathew', role: UserRole.ESTIMATION, phone: '+971500000003', passwordHash } }),
+    sales: await db.user.create({ data: { loginId: 'AG004', email: 'sales@algurggroup.ae', name: 'Sales Team Lead', role: UserRole.SALES, phone: '+971500000004', passwordHash } }),
+    nimesha: await db.user.create({ data: { loginId: 'AG005', email: 'nimesha@algurggroup.ae', name: 'Ms. Nimesha Perera', role: UserRole.PROCUREMENT, phone: '+971500000005', passwordHash } }),
+    store: await db.user.create({ data: { loginId: 'AG006', email: 'store@algurggroup.ae', name: 'Store Keeper', role: UserRole.STORE, phone: '+971500000006', passwordHash } }),
+    venkat: await db.user.create({ data: { loginId: 'AG007', email: 'venkat@algurggroup.ae', name: 'Mr. Venketeswaram', role: UserRole.QC, phone: '+971500000007', passwordHash } }),
+    motasem: await db.user.create({ data: { loginId: 'AG008', email: 'motasem@algurggroup.ae', name: 'Mr. Motasem Al Rashid', role: UserRole.PRODUCTION, phone: '+971500000008', passwordHash } }),
+    draft: await db.user.create({ data: { loginId: 'AG009', email: 'draftsman@algurggroup.ae', name: 'Technical Drafter', role: UserRole.ENGINEERING, phone: '+971500000009', passwordHash } }),
+    wasim: await db.user.create({ data: { loginId: 'AG010', email: 'wasim@algurggroup.ae', name: 'Mr. Wasim Khan', role: UserRole.PROJECT, phone: '+971500000010', passwordHash } }),
+    finance: await db.user.create({ data: { loginId: 'AG011', email: 'finance@algurggroup.ae', name: 'Finance Officer', role: UserRole.FINANCE, phone: '+971500000011', passwordHash } }),
   }
 
   // ---------- CLIENTS ----------
@@ -571,7 +571,7 @@ async function main() {
 
   console.log('Seed complete. Demo user accounts created:')
   for (const [k, u] of Object.entries(users)) {
-    console.log(`   ${k.padEnd(10)} ${u.email}  (${u.role})`)
+    console.log(`   ${u.loginId}  ${u.email}  (${u.role})`)
   }
   console.log(`   Default password for all accounts: ${DEFAULT_PASSWORD}`)
 }

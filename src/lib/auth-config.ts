@@ -1,4 +1,5 @@
 // NextAuth configuration with credentials provider backed by Prisma + bcrypt.
+// Authenticates by Login ID (e.g. AG001) or email address.
 // Production ready: swap NEXTAUTH_SECRET, SMTP and DATABASE_URL in your environment.
 
 import type { NextAuthOptions } from 'next-auth'
@@ -20,17 +21,37 @@ export const AUTH_CONFIG: NextAuthOptions = {
     CredentialsProvider({
       name: 'Al Gurg Group',
       credentials: {
-        email: { label: 'Email', type: 'email', placeholder: 'your.name@algurggroup.ae' },
+        loginId: { label: 'Login ID', type: 'text', placeholder: 'AG001' },
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        const email = (credentials?.email || '').trim().toLowerCase()
+        // Accept either a login ID (AG001) or an email address.
+        const rawInput = (credentials?.loginId || credentials?.email || '').trim()
         const password = credentials?.password || ''
-        if (!email || !password) return null
+        if (!rawInput || !password) return null
 
-        const user = await db.user.findFirst({
-          where: { email: { equals: email }, isActive: true },
-        })
+        const inputLower = rawInput.toLowerCase()
+        const isEmail = inputLower.includes('@')
+
+        // Look up the user by loginId (case-insensitive) OR by email.
+        // Prisma does not support case-insensitive where on SQLite directly,
+        // so we fetch candidates and compare in JS for loginId.
+        let user = null
+        if (isEmail) {
+          user = await db.user.findFirst({
+            where: { email: { equals: inputLower }, isActive: true },
+          })
+        } else {
+          // Try exact match first, then case-insensitive fallback
+          user = await db.user.findFirst({
+            where: { loginId: { equals: rawInput }, isActive: true },
+          })
+          if (!user) {
+            const all = await db.user.findMany({ where: { isActive: true, loginId: { not: null } } })
+            user = all.find((u) => u.loginId?.toLowerCase() === inputLower) || null
+          }
+        }
+
         if (!user || !user.passwordHash) return null
 
         const valid = await bcrypt.compare(password, user.passwordHash)
@@ -48,6 +69,7 @@ export const AUTH_CONFIG: NextAuthOptions = {
           name: user.name,
           role: user.role as string,
           phone: user.phone || undefined,
+          loginId: user.loginId || undefined,
         } as any
       },
     }),
@@ -59,6 +81,7 @@ export const AUTH_CONFIG: NextAuthOptions = {
         token.id = (user as any).id
         token.role = (user as any).role
         token.phone = (user as any).phone
+        token.loginId = (user as any).loginId
       }
       return token
     },
@@ -69,6 +92,7 @@ export const AUTH_CONFIG: NextAuthOptions = {
         ;(session.user as any).phone = token.phone
         ;(session.user as any).name = token.name
         ;(session.user as any).email = token.email
+        ;(session.user as any).loginId = token.loginId
       }
       return session
     },
