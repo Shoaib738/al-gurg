@@ -96,12 +96,14 @@ export const ROLE_NAV: Record<UserRole, NavItem[]> = {
     { label: "Pending Inspections", view: "qc-pending", icon: ClipboardCheck },
     { label: "QC Reports", view: "qc-reports", icon: ShieldCheck },
     { label: "Production Stages", view: "production", icon: Hammer },
+    { label: "Projects", view: "projects", icon: FolderKanban },
   ],
   PRODUCTION: [
     { label: "Dashboard", view: "production", icon: LayoutDashboard },
     { label: "Production Orders", view: "production-orders", icon: Factory },
     { label: "Stages", view: "production", icon: Hammer },
     { label: "Drawings", view: "drawings", icon: PencilRuler },
+    { label: "Projects", view: "projects", icon: FolderKanban },
   ],
   ENGINEERING: [
     { label: "Dashboard", view: "engineering", icon: LayoutDashboard },

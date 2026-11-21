@@ -18,9 +18,9 @@ export const AUTH_CONFIG: NextAuthOptions = {
   secret: SECRET,
   providers: [
     CredentialsProvider({
-      name: 'Al Gurg Furniture',
+      name: 'Al Gurg Group',
       credentials: {
-        email: { label: 'Email', type: 'email', placeholder: 'your.name@algurgfurniture.ae' },
+        email: { label: 'Email', type: 'email', placeholder: 'your.name@algurggroup.ae' },
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {

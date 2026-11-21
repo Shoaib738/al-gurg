@@ -11,22 +11,22 @@ const db = new PrismaClient()
 const DEFAULT_PASSWORD = 'Welcome@2026'
 
 async function main() {
-  console.log('Seeding Al Gurg Furniture operations database...')
+  console.log('Seeding Al Gurg Group operations database...')
   const passwordHash = await bcrypt.hash(DEFAULT_PASSWORD, 10)
 
   // ---------- USERS ----------
   const users = {
-    admin: await db.user.create({ data: { email: 'admin@algurgfurniture.ae', name: 'System Administrator', role: UserRole.ADMIN, phone: '+971500000001', passwordHash } }),
-    mazen: await db.user.create({ data: { email: 'mazen@algurgfurniture.ae', name: 'Mr. Mazen Al Gurg', role: UserRole.BUSINESS_MANAGER, phone: '+971500000002', passwordHash } }),
-    roy: await db.user.create({ data: { email: 'roy@algurgfurniture.ae', name: 'Mr. Roy Mathew', role: UserRole.ESTIMATION, phone: '+971500000003', passwordHash } }),
-    sales: await db.user.create({ data: { email: 'sales@algurgfurniture.ae', name: 'Sales Team Lead', role: UserRole.SALES, phone: '+971500000004', passwordHash } }),
-    nimesha: await db.user.create({ data: { email: 'nimesha@algurgfurniture.ae', name: 'Ms. Nimesha Perera', role: UserRole.PROCUREMENT, phone: '+971500000005', passwordHash } }),
-    store: await db.user.create({ data: { email: 'store@algurgfurniture.ae', name: 'Store Keeper', role: UserRole.STORE, phone: '+971500000006', passwordHash } }),
-    venkat: await db.user.create({ data: { email: 'venkat@algurgfurniture.ae', name: 'Mr. Venketeswaram', role: UserRole.QC, phone: '+971500000007', passwordHash } }),
-    motasem: await db.user.create({ data: { email: 'motasem@algurgfurniture.ae', name: 'Mr. Motasem Al Rashid', role: UserRole.PRODUCTION, phone: '+971500000008', passwordHash } }),
-    draft: await db.user.create({ data: { email: 'draftsman@algurgfurniture.ae', name: 'Technical Drafter', role: UserRole.ENGINEERING, phone: '+971500000009', passwordHash } }),
-    wasim: await db.user.create({ data: { email: 'wasim@algurgfurniture.ae', name: 'Mr. Wasim Khan', role: UserRole.PROJECT, phone: '+971500000010', passwordHash } }),
-    finance: await db.user.create({ data: { email: 'finance@algurgfurniture.ae', name: 'Finance Officer', role: UserRole.FINANCE, phone: '+971500000011', passwordHash } }),
+    admin: await db.user.create({ data: { email: 'admin@algurggroup.ae', name: 'System Administrator', role: UserRole.ADMIN, phone: '+971500000001', passwordHash } }),
+    mazen: await db.user.create({ data: { email: 'mazen@algurggroup.ae', name: 'Mr. Mazen Al Gurg', role: UserRole.BUSINESS_MANAGER, phone: '+971500000002', passwordHash } }),
+    roy: await db.user.create({ data: { email: 'roy@algurggroup.ae', name: 'Mr. Roy Mathew', role: UserRole.ESTIMATION, phone: '+971500000003', passwordHash } }),
+    sales: await db.user.create({ data: { email: 'sales@algurggroup.ae', name: 'Sales Team Lead', role: UserRole.SALES, phone: '+971500000004', passwordHash } }),
+    nimesha: await db.user.create({ data: { email: 'nimesha@algurggroup.ae', name: 'Ms. Nimesha Perera', role: UserRole.PROCUREMENT, phone: '+971500000005', passwordHash } }),
+    store: await db.user.create({ data: { email: 'store@algurggroup.ae', name: 'Store Keeper', role: UserRole.STORE, phone: '+971500000006', passwordHash } }),
+    venkat: await db.user.create({ data: { email: 'venkat@algurggroup.ae', name: 'Mr. Venketeswaram', role: UserRole.QC, phone: '+971500000007', passwordHash } }),
+    motasem: await db.user.create({ data: { email: 'motasem@algurggroup.ae', name: 'Mr. Motasem Al Rashid', role: UserRole.PRODUCTION, phone: '+971500000008', passwordHash } }),
+    draft: await db.user.create({ data: { email: 'draftsman@algurggroup.ae', name: 'Technical Drafter', role: UserRole.ENGINEERING, phone: '+971500000009', passwordHash } }),
+    wasim: await db.user.create({ data: { email: 'wasim@algurggroup.ae', name: 'Mr. Wasim Khan', role: UserRole.PROJECT, phone: '+971500000010', passwordHash } }),
+    finance: await db.user.create({ data: { email: 'finance@algurggroup.ae', name: 'Finance Officer', role: UserRole.FINANCE, phone: '+971500000011', passwordHash } }),
   }
 
   // ---------- CLIENTS ----------

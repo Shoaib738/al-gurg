@@ -28,7 +28,6 @@ import { ROLE_LABELS, type SessionUser } from "@/lib/auth-shared";
 import { useNotifications } from "@/lib/queries";
 import { shortName, formatRelativeTime } from "@/lib/format";
 import {
-  Sofa,
   Bell,
   Menu,
   LogOut,
@@ -143,12 +142,16 @@ function SidebarContent({
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2.5 p-4 border-b">
-        <div className="rounded-lg bg-amber-700 text-amber-50 p-2">
-          <Sofa className="size-5" />
+        <div className="rounded-lg bg-amber-800 p-1.5 flex items-center justify-center h-10 w-12 shrink-0">
+          <img
+            src="/algurg-logo.svg"
+            alt="Al Gurg Group"
+            className="h-7 w-auto"
+          />
         </div>
         <div className="min-w-0">
           <p className="text-sm font-semibold leading-tight truncate">
-            Al Gurg Furniture
+            Al Gurg Group
           </p>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
             Operations Portal
@@ -341,10 +344,10 @@ function Footer() {
     <footer className="mt-auto border-t bg-muted/30">
       <div className="px-4 sm:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
         <p>
-          Al Gurg Furniture Group | Operations Portal
+          Al Gurg Group | Operations Portal
         </p>
         <div className="flex items-center gap-3">
-          <span>© 2026 Al Gurg Furniture Group. All rights reserved.</span>
+          <span>© 2026 Al Gurg Group. All rights reserved.</span>
         </div>
       </div>
     </footer>

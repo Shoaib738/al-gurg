@@ -16,17 +16,22 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Al Gurg Furniture Group | Operations Portal",
+  title: "Al Gurg Group | Operations Portal",
   description:
-    "Production and operations management portal for Al Gurg Furniture Group covering enquiries, quotations, procurement, store, quality control, production, engineering, delivery and finance.",
+    "Operations portal for Al Gurg Group covering enquiries, quotations, procurement, store, quality control, production, engineering, delivery and finance.",
   keywords: [
-    "Al Gurg Furniture",
+    "Al Gurg Group",
     "Operations Portal",
     "Production Management",
     "Procurement",
     "Quality Control",
   ],
-  authors: [{ name: "Al Gurg Furniture Group" }],
+  authors: [{ name: "Al Gurg Group" }],
+  icons: {
+    icon: "/algurg-logo.svg",
+    shortcut: "/algurg-logo.svg",
+    apple: "/algurg-logo.svg",
+  },
 };
 
 export default function RootLayout({

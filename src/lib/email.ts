@@ -6,7 +6,7 @@
 //   SMTP_PORT       e.g. 587
 //   SMTP_USER       your SMTP username
 //   SMTP_PASS       your SMTP password or API key
-//   SMTP_FROM       from address e.g. "Al Gurg Operations <ops@algurgfurniture.ae>"
+//   SMTP_FROM       from address e.g. "Al Gurg Operations <ops@algurggroup.ae>"
 //
 // When SMTP_HOST is not set, emails are logged to EmailLog only (no network call),
 // so the system works in development without an SMTP provider.
@@ -18,7 +18,7 @@ const SMTP_HOST = process.env.SMTP_HOST || ''
 const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587', 10)
 const SMTP_USER = process.env.SMTP_USER || ''
 const SMTP_PASS = process.env.SMTP_PASS || ''
-const SMTP_FROM = process.env.SMTP_FROM || 'Al Gurg Operations <ops@algurgfurniture.ae>'
+const SMTP_FROM = process.env.SMTP_FROM || 'Al Gurg Operations <ops@algurggroup.ae>'
 const SMTP_ENABLED = Boolean(SMTP_HOST && SMTP_USER && SMTP_PASS)
 
 let transporter: nodemailer.Transporter | null = null

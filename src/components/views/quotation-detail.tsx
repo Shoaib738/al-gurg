@@ -259,7 +259,18 @@ export function QuotationDetail({
                         <img
                           src={it.referenceImage}
                           alt={it.description}
-                          className="size-10 rounded object-cover border"
+                          className="size-10 rounded object-cover border bg-muted/30"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).style.display = "none";
+                            const parent = e.currentTarget.parentElement;
+                            if (parent && !parent.querySelector(".img-fallback")) {
+                              const fallback = document.createElement("div");
+                              fallback.className =
+                                "img-fallback size-10 rounded bg-muted/50 flex items-center justify-center text-muted-foreground";
+                              fallback.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>';
+                              parent.appendChild(fallback);
+                            }
+                          }}
                         />
                       ) : (
                         <div className="size-10 rounded bg-muted/50" />
@@ -374,7 +385,7 @@ export function QuotationDetail({
         quotationTotal={q.total}
         onSubmit={async (amount) => {
           // create project if not exists via release-order? No - finance just generates link, needs a project.
-          // For demo: generate link against any existing project for this client, or quote-only link.
+          // Generate link against an existing project for this client, or quote-only link.
           const res = await fetch("/api/data", {
             method: "POST",
             headers: { "Content-Type": "application/json" },

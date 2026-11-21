@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Sofa, KeyRound, ArrowRight } from "lucide-react";
+import { Loader2, KeyRound, ArrowRight } from "lucide-react";
 import { ROLE_LABELS } from "@/lib/auth-shared";
 import { toast } from "sonner";
 
@@ -17,17 +17,17 @@ import { toast } from "sonner";
 // In production these accounts are created by the administrator and the
 // default password is rotated on first login.
 const TEAM_ACCOUNTS = [
-  { email: "admin@algurgfurniture.ae", name: "System Administrator", role: "ADMIN" },
-  { email: "mazen@algurgfurniture.ae", name: "Mazen Al Gurg", role: "BUSINESS_MANAGER" },
-  { email: "roy@algurgfurniture.ae", name: "Roy Mathew", role: "ESTIMATION" },
-  { email: "sales@algurgfurniture.ae", name: "Sales Team", role: "SALES" },
-  { email: "nimesha@algurgfurniture.ae", name: "Nimesha Perera", role: "PROCUREMENT" },
-  { email: "store@algurgfurniture.ae", name: "Store Keeper", role: "STORE" },
-  { email: "venkat@algurgfurniture.ae", name: "Venketeswaram", role: "QC" },
-  { email: "motasem@algurgfurniture.ae", name: "Motasem Al Rashid", role: "PRODUCTION" },
-  { email: "draftsman@algurgfurniture.ae", name: "Technical Drafter", role: "ENGINEERING" },
-  { email: "wasim@algurgfurniture.ae", name: "Wasim Khan", role: "PROJECT" },
-  { email: "finance@algurgfurniture.ae", name: "Finance Officer", role: "FINANCE" },
+  { email: "admin@algurggroup.ae", name: "System Administrator", role: "ADMIN" },
+  { email: "mazen@algurggroup.ae", name: "Mazen Al Gurg", role: "BUSINESS_MANAGER" },
+  { email: "roy@algurggroup.ae", name: "Roy Mathew", role: "ESTIMATION" },
+  { email: "sales@algurggroup.ae", name: "Sales Team", role: "SALES" },
+  { email: "nimesha@algurggroup.ae", name: "Nimesha Perera", role: "PROCUREMENT" },
+  { email: "store@algurggroup.ae", name: "Store Keeper", role: "STORE" },
+  { email: "venkat@algurggroup.ae", name: "Venketeswaram", role: "QC" },
+  { email: "motasem@algurggroup.ae", name: "Motasem Al Rashid", role: "PRODUCTION" },
+  { email: "draftsman@algurggroup.ae", name: "Technical Drafter", role: "ENGINEERING" },
+  { email: "wasim@algurggroup.ae", name: "Wasim Khan", role: "PROJECT" },
+  { email: "finance@algurggroup.ae", name: "Finance Officer", role: "FINANCE" },
 ] as const;
 
 const DEFAULT_PASSWORD = "Welcome@2026";
@@ -86,12 +86,16 @@ export function LoginScreen() {
           </div>
           <div className="relative">
             <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-amber-50/15 p-2.5 backdrop-blur">
-                <Sofa className="size-7" />
+              <div className="rounded-xl bg-amber-50/15 p-2 backdrop-blur flex items-center justify-center h-12 w-14">
+                <img
+                  src="/algurg-logo.svg"
+                  alt="Al Gurg Group"
+                  className="h-8 w-auto"
+                />
               </div>
               <div>
                 <p className="text-lg font-semibold tracking-tight">
-                  Al Gurg Furniture Group
+                  Al Gurg Group
                 </p>
                 <p className="text-xs text-amber-100/80">
                   Operations Portal
@@ -117,7 +121,7 @@ export function LoginScreen() {
             </ul>
           </div>
           <p className="relative text-xs text-amber-100/60">
-            © 2026 Al Gurg Furniture Group. All rights reserved.
+            © 2026 Al Gurg Group. All rights reserved.
           </p>
         </section>
 
@@ -125,12 +129,16 @@ export function LoginScreen() {
         <section className="flex-1 flex items-center justify-center p-6 sm:p-10">
           <div className="w-full max-w-md space-y-6">
             <div className="lg:hidden flex items-center gap-3">
-              <div className="rounded-xl bg-amber-700 p-2.5 text-amber-50">
-                <Sofa className="size-6" />
+              <div className="rounded-xl bg-amber-800 p-1.5 flex items-center justify-center h-11 w-12">
+                <img
+                  src="/algurg-logo.svg"
+                  alt="Al Gurg Group"
+                  className="h-7 w-auto"
+                />
               </div>
               <div>
                 <p className="font-semibold tracking-tight">
-                  Al Gurg Furniture Group
+                  Al Gurg Group
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Operations Portal
@@ -161,7 +169,7 @@ export function LoginScreen() {
                       autoComplete="username"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="your.name@algurgfurniture.ae"
+                      placeholder="your.name@algurggroup.ae"
                       className="h-11"
                     />
                   </div>

@@ -1293,8 +1293,8 @@ async function handlePost(payload: any, session: any) {
         q.total
       )}).<br/><br/>Please initiate your respective workflows:<br/>  • Procurement: prepare BOQ-M, check stock, raise MRQ<br/>  • Engineering: prepare drawings for client approval<br/>  • Production: plan joinery and metal stages<br/>  • Project Department: schedule site visit<br/><br/>Regards,<br/>Estimation Department`;
       await sendEmail({
-        to: "procurement@algurgfurniture.ae",
-        cc: ["engineering@algurgfurniture.ae", "production@algurgfurniture.ae", "project@algurgfurniture.ae"],
+        to: "procurement@algurggroup.ae",
+        cc: ["engineering@algurggroup.ae", "production@algurggroup.ae", "project@algurggroup.ae"],
         subject: orderReleaseEmailSubject,
         body: orderReleaseEmailBody,
         refType: "ORDER_RELEASE",
@@ -1305,8 +1305,8 @@ async function handlePost(payload: any, session: any) {
         projectId: project.id,
         projectNo: project.projectNo,
         email: {
-          to: "procurement@algurgfurniture.ae",
-          cc: ["engineering@algurgfurniture.ae", "production@algurgfurniture.ae", "project@algurgfurniture.ae"],
+          to: "procurement@algurggroup.ae",
+          cc: ["engineering@algurggroup.ae", "production@algurggroup.ae", "project@algurggroup.ae"],
           subject: orderReleaseEmailSubject,
           body: orderReleaseEmailBody,
           timestamp: new Date().toISOString(),
@@ -1581,10 +1581,10 @@ async function handlePost(payload: any, session: any) {
         lpo.totalAmount
       )}<br/>Expected delivery: ${new Date(
         lpo.expectedDelivery || Date.now()
-      ).toDateString()}<br/><br/>Regards,<br/>Procurement Department<br/>Al Gurg Furniture Group`;
+      ).toDateString()}<br/><br/>Regards,<br/>Procurement Department<br/>Al Gurg Group`;
       await sendEmail({
-        to: lpo.supplier.email || "supplier@example.com",
-        cc: ["store@algurgfurniture.ae"],
+        to: lpo.supplier.email || "supplier@algurggroup.ae",
+        cc: ["store@algurggroup.ae"],
         subject: lpoEmailSubject,
         body: lpoEmailBody,
         refType: "LPO_SENT",
@@ -1593,8 +1593,8 @@ async function handlePost(payload: any, session: any) {
       return {
         success: true,
         email: {
-          to: lpo.supplier.email || "supplier@example.com",
-          cc: ["store@algurgfurniture.ae"],
+          to: lpo.supplier.email || "supplier@algurggroup.ae",
+          cc: ["store@algurggroup.ae"],
           subject: lpoEmailSubject,
           body: lpoEmailBody,
           timestamp: new Date().toISOString(),
@@ -1744,10 +1744,10 @@ async function handlePost(payload: any, session: any) {
         const missingItemsText = payload.missingItems?.length
           ? payload.missingItems.join(", ")
           : "none";
-        const qcEmailBody = `QC inspection completed.<br/>Report: ${rep.reportNo}<br/>Status: ${payload.status}<br/>Remarks: ${payload.remarks || "n/a"}<br/>Missing items: ${missingItemsText}<br/><br/>Regards,<br/>Quality Control Department<br/>Al Gurg Furniture Group`;
+        const qcEmailBody = `QC inspection completed.<br/>Report: ${rep.reportNo}<br/>Status: ${payload.status}<br/>Remarks: ${payload.remarks || "n/a"}<br/>Missing items: ${missingItemsText}<br/><br/>Regards,<br/>Quality Control Department<br/>Al Gurg Group`;
         await sendEmail({
-          to: "procurement@algurgfurniture.ae",
-          cc: ["info@algurgfurniture.ae", "store@algurgfurniture.ae", "production@algurgfurniture.ae"],
+          to: "procurement@algurggroup.ae",
+          cc: ["info@algurggroup.ae", "store@algurggroup.ae", "production@algurggroup.ae"],
           subject: qcEmailSubject,
           body: qcEmailBody,
           refType: "QC_REPORT",
@@ -1756,8 +1756,8 @@ async function handlePost(payload: any, session: any) {
         return {
           success: true,
           email: {
-            to: "procurement@algurgfurniture.ae",
-            cc: ["info@algurgfurniture.ae", "store@algurgfurniture.ae", "production@algurgfurniture.ae"],
+            to: "procurement@algurggroup.ae",
+            cc: ["info@algurggroup.ae", "store@algurggroup.ae", "production@algurggroup.ae"],
             subject: qcEmailSubject,
             body: qcEmailBody,
             timestamp: new Date().toISOString(),
