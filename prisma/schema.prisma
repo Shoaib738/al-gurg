@@ -1,0 +1,783 @@
+// Al Gurg Furniture - Production & Operations Management System
+// Complete schema covering: Enquiry → Estimation → Quotation → Approval →
+// Order → Boq → Procurement (MRQ/PR/LPO) → QC → Store/GRN →
+// Production (Joinery & Metal with QC gates) → Drawing → Delivery/Installation → Feedback
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// =====================================================
+// USERS, ROLES & DEPARTMENTS
+// =====================================================
+
+enum UserRole {
+  ADMIN
+  BUSINESS_MANAGER
+  ESTIMATION
+  SALES
+  PROCUREMENT
+  STORE
+  QC
+  PRODUCTION
+  ENGINEERING
+  PROJECT
+  FINANCE
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  role         UserRole
+  phone        String?
+  whatsapp     String?
+  avatar       String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // relations
+  enquiries           Enquiry[]           @relation("EnquirySales")
+  quotations          Quotation[]         @relation("QuotationCreator")
+  approvals           Quotation[]         @relation("QuotationApprover")
+  quotationComments   QuotationComment[]
+  boqs                Boq[]
+  mrqs                MaterialRequisition[] @relation("MrqCreator")
+  supplierQuotes      SupplierQuote[]     @relation("SupplierQuoteApprover")
+  supplierQuotesReq   SupplierQuote[]     @relation("SupplierQuoteCreator")
+  prs                 PurchaseRequest[]
+  lpos                LocalPurchaseOrder[]
+  grns                GoodsReceivingNote[]
+  qcReports           QcReport[]
+  productionOrders    ProductionOrder[]   @relation("ProdOrderReleaser")
+  stageOps            ProductionStage[]   @relation("StageOperator")
+  drawings            DrawingSubmission[] @relation("DrawingCreator")
+  drawingApprover     DrawingSubmission[] @relation("DrawingApprover")
+  deliveries          DeliveryAcknowledgement[]
+  installations       InstallationRecord[]
+  feedbacks           CustomerFeedback[]
+  paymentLinks        PaymentLink[]
+  redFlags            RedFlag[]
+  delays              DelayComplaint[]
+  notifications       Notification[]
+  timelineEvents      TimelineEvent[]
+  approvalReviews     ApprovalLog[]
+}
+
+// =====================================================
+// CLIENTS & SUPPLIERS
+// =====================================================
+
+enum ClientType {
+  RETAIL
+  PROJECT
+}
+
+model Client {
+  id          String     @id @default(cuid())
+  name        String
+  type        ClientType
+  company     String?
+  contactPerson String?
+  email       String?
+  phone       String?
+  whatsapp    String?
+  address     String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  enquiries   Enquiry[]
+  quotations  Quotation[]
+  projects    Project[]
+}
+
+model Supplier {
+  id        String   @id @default(cuid())
+  name      String
+  contactPerson String?
+  email     String?
+  phone     String?
+  whatsapp  String?
+  materials String?  // comma-separated materials supplied
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  materialsRef Material[]
+  supplierQuotes SupplierQuote[]
+  prs          PurchaseRequest[]
+  lpos         LocalPurchaseOrder[]
+}
+
+model Material {
+  id          String   @id @default(cuid())
+  name        String
+  spec        String?  // thickness / grade / finish
+  unit        String   // sqm / meter / piece / sheet
+  unitPrice   Float
+  supplierId  String
+  supplier    Supplier @relation(fields: [supplierId], references: [id])
+  inStock     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  boqItems    BoqItem[]
+  mrqItems    MaterialRequisitionItem[]
+}
+
+// =====================================================
+// ENQUIRY
+// =====================================================
+
+enum EnquiryStatus {
+  NEW
+  IN_ESTIMATION
+  QUOTED
+  CONFIRMED
+  LOST
+  ON_HOLD
+}
+
+enum EnquirySource {
+  EMAIL
+  WHATSAPP
+  PHONE
+  WALK_IN
+}
+
+model Enquiry {
+  id           String         @id @default(cuid())
+  enquiryNo    String         @unique
+  enquiryDate  DateTime       @default(now())
+  source       EnquirySource  @default(EMAIL)
+  clientId     String
+  client       Client         @relation(fields: [clientId], references: [id])
+  salesUserId  String
+  salesUser    User           @relation("EnquirySales", fields: [salesUserId], references: [id])
+  title        String
+  description  String
+  projectType  String?  // wardrobe / kitchen / vanity / door etc.
+  location     String?
+  attachments  String?  // JSON array of file names
+  status       EnquiryStatus  @default(NEW)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  quotations   Quotation[]
+  projects     Project[]
+  timeline     TimelineEvent[]
+}
+
+// =====================================================
+// QUOTATION
+// =====================================================
+
+enum QuotationStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  SENT_TO_CLIENT
+  SIGNED_CONFIRMED
+  PAYMENT_LINK_SENT
+  PAID
+  LPO_RECEIVED
+  ORDER_RELEASED
+}
+
+model Quotation {
+  id              String   @id @default(cuid())
+  quotationNo     String   @unique
+  enquiryId       String
+  enquiry         Enquiry  @relation(fields: [enquiryId], references: [id])
+  clientId        String
+  client          Client   @relation(fields: [clientId], references: [id])
+  createdBy       String
+  creator         User     @relation("QuotationCreator", fields: [createdBy], references: [id])
+  template        String   @default("standard")
+  validity        Int      @default(30) // days
+  deliveryWeeks   Int      @default(4)
+  paymentTerms    String   @default("50% advance, 50% before delivery")
+  warranty        String   @default("2 years")
+  subtotal        Float    @default(0)
+  discount        Float    @default(0)
+  vat             Float    @default(0)
+  total           Float    @default(0)
+  status          QuotationStatus @default(DRAFT)
+  approvedBy      String?
+  approver        User?    @relation("QuotationApprover", fields: [approvedBy], references: [id])
+  approvedAt      DateTime?
+  sentAt          DateTime?
+  signedAt        DateTime?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  items           QuotationItem[]
+  comments        QuotationComment[]
+  attachments     QuotationAttachment[]
+  approvalLogs    ApprovalLog[]
+  paymentLinks    PaymentLink[]
+  projects        Project[]
+  boqs            Boq[]
+  timeline        TimelineEvent[]
+}
+
+model QuotationItem {
+  id            String    @id @default(cuid())
+  quotationId   String
+  quotation     Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  lineNumber    Int
+  description   String
+  spec          String?   // quality / specification
+  referenceImage String?  // image URL / link
+  detailLink    String?   // external detail link
+  qty           Float
+  unit          String    // meter / sqm / piece
+  material      String?
+  materialCost  Float     @default(0)
+  laborHours    Float     @default(0)
+  laborRate     Float     @default(0)
+  productionHours Float   @default(0)
+  installationHours Float @default(0)
+  unitPrice     Float     @default(0)
+  total         Float     @default(0)
+}
+
+model QuotationComment {
+  id           String   @id @default(cuid())
+  quotationId  String
+  quotation    Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  text         String
+  createdAt    DateTime @default(now())
+}
+
+model QuotationAttachment {
+  id           String   @id @default(cuid())
+  quotationId  String
+  quotation    Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  name         String
+  url          String
+  type         String?  // image / pdf / drawing
+}
+
+model ApprovalLog {
+  id           String   @id @default(cuid())
+  quotationId  String?
+  quotation    Quotation? @relation(fields: [quotationId], references: [id])
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  action       String   // submitted / approved / rejected / commented / edited
+  comment      String?
+  createdAt    DateTime @default(now())
+}
+
+// =====================================================
+// PROJECT (after order confirmed)
+// =====================================================
+
+enum ProjectStatus {
+  ORDER_RELEASED
+  IN_PLANNING
+  IN_PROCUREMENT
+  IN_ENGINEERING
+  IN_PRODUCTION
+  QC_IN_PROGRESS
+  READY_FOR_DELIVERY
+  DELIVERED
+  IN_INSTALLATION
+  INSTALLED
+  FEEDBACK_PENDING
+  COMPLETED
+  ON_HOLD
+  CANCELLED
+}
+
+model Project {
+  id           String   @id @default(cuid())
+  projectNo    String   @unique
+  name         String
+  enquiryId    String?
+  enquiry      Enquiry? @relation(fields: [enquiryId], references: [id])
+  quotationId  String?
+  quotation    Quotation? @relation(fields: [quotationId], references: [id])
+  clientId     String
+  client       Client   @relation(fields: [clientId], references: [id])
+  type         ClientType @default(PROJECT)
+  startDate    DateTime?
+  dueDate      DateTime?
+  deliveryDate DateTime?
+  status       ProjectStatus @default(ORDER_RELEASED)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  boqs                Boq[]
+  mrqs                MaterialRequisition[]
+  prs                 PurchaseRequest[]
+  lpos                LocalPurchaseOrder[]
+  grns                GoodsReceivingNote[]
+  productionOrders    ProductionOrder[]
+  drawings            DrawingSubmission[]
+  deliveryAck         DeliveryAcknowledgement?
+  installation        InstallationRecord?
+  feedback            CustomerFeedback?
+  paymentLinks        PaymentLink[]
+  redFlags            RedFlag[]
+  delays              DelayComplaint[]
+  timeline            TimelineEvent[]
+}
+
+// =====================================================
+// Boq (Bill of Quantity - Material)
+// =====================================================
+
+enum BoqStatus {
+  DRAFT
+  ISSUED_TO_PROCUREMENT
+  IN_PROCUREMENT
+  COMPLETED
+}
+
+model Boq {
+  id           String   @id @default(cuid())
+  boqNo        String   @unique
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id])
+  quotationId  String?
+  quotation    Quotation? @relation(fields: [quotationId], references: [id])
+  issuedBy     String
+  issuer       User     @relation(fields: [issuedBy], references: [id])
+  status       BoqStatus @default(DRAFT)
+  issuedAt     DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  items        BoqItem[]
+}
+
+model BoqItem {
+  id          String   @id @default(cuid())
+  boqId       String
+  boq         Boq      @relation(fields: [boqId], references: [id], onDelete: Cascade)
+  materialId  String?
+  material    Material? @relation(fields: [materialId], references: [id])
+  description String
+  spec        String?
+  qty         Float
+  unit        String
+  available   Boolean  @default(true)
+  notes       String?
+}
+
+// =====================================================
+// PROCUREMENT: MRQ → Supplier Quote → PR → LPO → GRN
+// =====================================================
+
+enum MrqStatus {
+  DRAFT
+  SUBMITTED
+  QUOTED
+  APPROVED
+  CONVERTED_TO_PR
+}
+
+model MaterialRequisition {
+  id          String    @id @default(cuid())
+  mrqNo       String    @unique
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id])
+  boqId       String?
+  createdById String
+  creator     User      @relation("MrqCreator", fields: [createdById], references: [id])
+  status      MrqStatus @default(DRAFT)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  items       MaterialRequisitionItem[]
+  supplierQuotes SupplierQuote[]
+  prs         PurchaseRequest[]
+}
+
+model MaterialRequisitionItem {
+  id          String   @id @default(cuid())
+  mrqId       String
+  mrq         MaterialRequisition @relation(fields: [mrqId], references: [id], onDelete: Cascade)
+  materialId  String?
+  material    Material? @relation(fields: [materialId], references: [id])
+  description String
+  spec        String?
+  qty         Float
+  unit        String
+  quotedPrice Float?
+}
+
+model SupplierQuote {
+  id           String   @id @default(cuid())
+  supplierId   String
+  supplier     Supplier @relation(fields: [supplierId], references: [id])
+  mrqId        String
+  mrq          MaterialRequisition @relation(fields: [mrqId], references: [id])
+  requestedById String
+  requester    User     @relation("SupplierQuoteCreator", fields: [requestedById], references: [id])
+  approvedById String?
+  approver     User?    @relation("SupplierQuoteApprover", fields: [approvedById], references: [id])
+  approvedAt   DateTime?
+  totalAmount  Float    @default(0)
+  deliveryDays Int      @default(7)
+  status       String   @default("PENDING") // PENDING / APPROVED / REJECTED
+  remarks      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  prs          PurchaseRequest[]
+}
+
+model PurchaseRequest {
+  id           String   @id @default(cuid())
+  prNo         String   @unique
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id])
+  mrqId        String?
+  mrq          MaterialRequisition? @relation(fields: [mrqId], references: [id])
+  supplierQuoteId String?
+  supplierQuote SupplierQuote? @relation(fields: [supplierQuoteId], references: [id])
+  supplierId   String
+  supplier     Supplier @relation(fields: [supplierId], references: [id])
+  createdById  String
+  creator      User     @relation(fields: [createdById], references: [id])
+  sapRef       String?
+  status       String   @default("PENDING") // PENDING / APPROVED / CONVERTED_TO_LPO
+  approvedAt   DateTime?
+  totalAmount  Float    @default(0)
+  itemsJson    String   // JSON of items
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  lpos         LocalPurchaseOrder[]
+}
+
+model LocalPurchaseOrder {
+  id           String   @id @default(cuid())
+  lpoNo        String   @unique
+  prId         String
+  pr           PurchaseRequest @relation(fields: [prId], references: [id])
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id])
+  supplierId   String
+  supplier     Supplier @relation(fields: [supplierId], references: [id])
+  createdById  String
+  creator      User     @relation(fields: [createdById], references: [id])
+  totalAmount  Float    @default(0)
+  status       String   @default("ISSUED") // ISSUED / SENT_TO_SUPPLIER / DELIVERED / PARTIAL / CLOSED
+  sentAt       DateTime?
+  expectedDelivery DateTime?
+  deliveredAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  grns         GoodsReceivingNote[]
+}
+
+model GoodsReceivingNote {
+  id           String   @id @default(cuid())
+  grnNo        String   @unique
+  lpoId        String
+  lpo          LocalPurchaseOrder @relation(fields: [lpoId], references: [id])
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id])
+  storeUserId  String
+  storeUser    User     @relation(fields: [storeUserId], references: [id])
+  qcReportId   String?  @unique
+  qcReport     QcReport? @relation(fields: [qcReportId], references: [id])
+  documentsReceived String? // JSON: deliveryNote/taxInvoice/lpo
+  taxInvoiceNo String?
+  taxInvoiceDate DateTime?
+  taxInvoiceSubmitted Boolean @default(false)
+  remarks      String?
+  status       String   @default("RECEIVED") // RECEIVED / QC_PENDING / QC_PASSED / QC_FAILED / INVOICED
+  receivedAt   DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// =====================================================
+// QC REPORTS (delivery + production stages)
+// =====================================================
+
+enum QcReportType {
+  DELIVERY_INSPECTION
+  PRODUCTION_STAGE
+  INSTALLATION_INSPECTION
+}
+
+model QcReport {
+  id           String   @id @default(cuid())
+  reportNo     String   @unique
+  type         QcReportType
+  refType      String   // LPO / ProductionStage / Installation
+  refId        String
+  grn          GoodsReceivingNote?
+  installation InstallationRecord?
+  productionStageId String?
+  qcUserId     String
+  qcUser       User     @relation(fields: [qcUserId], references: [id])
+  inspectionDate DateTime @default(now())
+  status       String   @default("PENDING") // PENDING / PASSED / FAILED / PARTIAL / REWORK
+  photos       String?  // JSON array
+  remarks      String?
+  missingItems String?  // JSON array
+  checklistJson String? // JSON of checklist items
+  submittedAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  productionStages ProductionStage[]
+}
+
+// =====================================================
+// PRODUCTION: Joinery (9 steps) & Metal (5 steps)
+// =====================================================
+
+enum ProductionType {
+  JOINERY
+  METAL
+}
+
+enum StageStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  QC_PENDING
+  QC_PASSED
+  QC_FAILED
+  SKIPPED
+  COMPLETED
+}
+
+model ProductionOrder {
+  id           String   @id @default(cuid())
+  orderNo      String   @unique
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id])
+  type         ProductionType
+  releasedBy   String
+  releaser     User     @relation("ProdOrderReleaser", fields: [releasedBy], references: [id])
+  drawingApproved Boolean @default(false)
+  releasedAt   DateTime @default(now())
+  dueDate      DateTime?
+  status       String   @default("RELEASED") // RELEASED / IN_PROGRESS / COMPLETED
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  stages       ProductionStage[]
+}
+
+model ProductionStage {
+  id           String   @id @default(cuid())
+  productionOrderId String
+  productionOrder ProductionOrder @relation(fields: [productionOrderId], references: [id], onDelete: Cascade)
+  stageName    String
+  stageOrder   Int
+  operatorId   String?
+  operator     User?    @relation("StageOperator", fields: [operatorId], references: [id])
+  status       StageStatus @default(NOT_STARTED)
+  startedAt    DateTime?
+  completedAt  DateTime?
+  qcReportId   String?
+  qcReport     QcReport? @relation(fields: [qcReportId], references: [id])
+  remarks      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// =====================================================
+// DRAWING / ENGINEERING
+// =====================================================
+
+enum DrawingStatus {
+  DRAFT
+  SUBMITTED_TO_PM
+  SUBMITTED_TO_SALES
+  SUBMITTED_TO_CLIENT
+  APPROVED
+  REJECTED
+  REWORK
+}
+
+model DrawingSubmission {
+  id           String   @id @default(cuid())
+  drawingNo    String   @unique
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id])
+  drawnById    String
+  drawnBy      User     @relation("DrawingCreator", fields: [drawnById], references: [id])
+  drawingType  String   // elevation / shop drawing / assembly / detail
+  approvedById String?
+  approver     User?    @relation("DrawingApprover", fields: [approvedById], references: [id])
+  approvedByClientAt DateTime?
+  status       DrawingStatus @default(DRAFT)
+  attachmentsJson String?  // JSON array of file names
+  remarks      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// =====================================================
+// DELIVERY & INSTALLATION & FEEDBACK
+// =====================================================
+
+model DeliveryAcknowledgement {
+  id           String   @id @default(cuid())
+  projectId    String   @unique
+  project      Project  @relation(fields: [projectId], references: [id])
+  deliveredAt  DateTime @default(now())
+  deliveredBy  String
+  deliverer    User     @relation(fields: [deliveredBy], references: [id])
+  clientSigned Boolean  @default(false)
+  clientSignature String?
+  remarks      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model InstallationRecord {
+  id           String   @id @default(cuid())
+  projectId    String   @unique
+  project      Project  @relation(fields: [projectId], references: [id])
+  teamLeadId   String
+  teamLead     User     @relation(fields: [teamLeadId], references: [id])
+  startedAt    DateTime?
+  completedAt  DateTime?
+  inspectionReportId String?  @unique
+  inspection   QcReport? @relation(fields: [inspectionReportId], references: [id])
+  status       String   @default("SCHEDULED") // SCHEDULED / IN_PROGRESS / COMPLETED / INSPECTED
+  remarks      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model CustomerFeedback {
+  id           String   @id @default(cuid())
+  projectId    String   @unique
+  project      Project  @relation(fields: [projectId], references: [id])
+  submittedById String?
+  submitter    User?    @relation(fields: [submittedById], references: [id])
+  ratingsJson  String   // JSON of {quality, timeliness, installation, communication, overall}
+  comments     String?
+  recommendation String?
+  submittedAt  DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// =====================================================
+// PAYMENT
+// =====================================================
+
+enum PaymentLinkStatus {
+  GENERATED
+  SENT
+  PAID
+  EXPIRED
+}
+
+model PaymentLink {
+  id           String   @id @default(cuid())
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id])
+  quotationId  String?
+  quotation    Quotation? @relation(fields: [quotationId], references: [id])
+  amount       Float
+  linkRef      String   @unique
+  status       PaymentLinkStatus @default(GENERATED)
+  generatedById String
+  generator    User     @relation(fields: [generatedById], references: [id])
+  generatedAt  DateTime @default(now())
+  sentAt       DateTime?
+  paidAt       DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// =====================================================
+// RED FLAG & DELAY COMPLAINTS
+// =====================================================
+
+enum RedFlagSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model RedFlag {
+  id           String   @id @default(cuid())
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id])
+  raisedById   String
+  raiser       User     @relation(fields: [raisedById], references: [id])
+  department   String
+  reason       String
+  severity     RedFlagSeverity @default(MEDIUM)
+  daysDelayed  Int      @default(0)
+  resolved     Boolean  @default(false)
+  resolvedAt   DateTime?
+  resolvedById String?
+  resolution   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model DelayComplaint {
+  id           String   @id @default(cuid())
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id])
+  raisedById   String
+  raiser       User     @relation(fields: [raisedById], references: [id])
+  department   String
+  reason       String
+  daysDelayed  Int
+  status       String   @default("OPEN") // OPEN / IN_REVIEW / RESOLVED
+  resolution   String?
+  resolvedAt   DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// =====================================================
+// TIMELINE & NOTIFICATIONS
+// =====================================================
+
+model TimelineEvent {
+  id           String   @id @default(cuid())
+  projectId    String?
+  project      Project? @relation(fields: [projectId], references: [id])
+  enquiryId    String?
+  enquiry      Enquiry? @relation(fields: [enquiryId], references: [id])
+  quotationId  String?
+  quotation    Quotation? @relation(fields: [quotationId], references: [id])
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id])
+  stage        String
+  message      String
+  createdAt    DateTime @default(now())
+}
+
+model Notification {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  type         String
+  title        String
+  message      String
+  refType      String?
+  refId        String?
+  read         Boolean  @default(false)
+  createdAt    DateTime @default(now())
+}

@@ -1,0 +1,50 @@
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Providers } from "@/components/providers";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+export const metadata: Metadata = {
+  title: "Al Gurg Furniture Group — Production & Operations ERP",
+  description:
+    "End-to-end production & operations management for Al Gurg Furniture Group: enquiries, quotations, procurement, store, QC, production, engineering, delivery and finance.",
+  keywords: [
+    "Al Gurg",
+    "Furniture",
+    "ERP",
+    "Production",
+    "Operations",
+    "Procurement",
+    "QC",
+  ],
+  authors: [{ name: "Al Gurg Furniture Group" }],
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+      >
+        <Providers>{children}</Providers>
+        <Toaster />
+        <Sonner richColors position="top-right" />
+      </body>
+    </html>
+  );
+}
