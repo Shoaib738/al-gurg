@@ -36,7 +36,7 @@ export function PrList({ user }: { user: SessionUser }) {
           { key: "project", header: "Project", render: (p) => p.project?.name },
           { key: "supplier", header: "Supplier", render: (p) => p.supplier?.name },
           { key: "totalAmount", header: "Amount", render: (p) => formatCurrency(p.totalAmount) },
-          { key: "sapRef", header: "SAP ref", render: (p) => p.sapRef || "—" },
+          { key: "sapRef", header: "SAP ref", render: (p) => p.sapRef || "-" },
           { key: "status", header: "Status", render: (p) => <StatusBadge status={p.status} /> },
         ]}
       />
@@ -60,13 +60,13 @@ function PrDetailDialog({ id, onOpenChange, user }: { id: string | null; onOpenC
           </DialogHeader>
           <ScrollArea className="max-h-[70vh]">
             {isLoading ? (
-              <p className="p-4 text-sm text-muted-foreground">Loading…</p>
+              <p className="p-4 text-sm text-muted-foreground">Loading...</p>
             ) : p ? (
               <div className="space-y-3 text-sm p-1">
                 <div className="flex justify-between"><span className="text-muted-foreground">Project</span><span>{p.project?.name}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Supplier</span><span>{p.supplier?.name}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Amount</span><span className="font-bold text-amber-700">{formatCurrency(p.totalAmount)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">SAP ref</span><span>{p.sapRef || "—"}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">SAP ref</span><span>{p.sapRef || "-"}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Status</span><StatusBadge status={p.status} /></div>
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Items</p>

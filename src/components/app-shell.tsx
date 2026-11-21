@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 import {
   Sheet,
   SheetContent,
@@ -58,11 +59,11 @@ export function AppShell({ user }: { user: SessionUser }) {
 
   async function logout() {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
-      toast.success("Signed out");
+      await signOut({ redirect: false });
+      toast.success("You have been signed out");
       router.refresh();
     } catch {
-      toast.error("Failed to sign out");
+      toast.error("Unable to sign out. Please try again.");
     }
   }
 
@@ -150,7 +151,7 @@ function SidebarContent({
             Al Gurg Furniture
           </p>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
-            ERP Console
+            Operations Portal
           </p>
         </div>
       </div>
@@ -234,7 +235,7 @@ function Topbar({ user, activeView }: { user: SessionUser; activeView: string })
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
             <Input
-              placeholder="Search…"
+              placeholder="Search..."
               className="h-9 pl-8 text-sm bg-muted/40 border-transparent focus-visible:border-input"
             />
           </div>
@@ -340,16 +341,10 @@ function Footer() {
     <footer className="mt-auto border-t bg-muted/30">
       <div className="px-4 sm:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
         <p>
-          Al Gurg Furniture Group — Production &amp; Operations ERP
+          Al Gurg Furniture Group | Operations Portal
         </p>
         <div className="flex items-center gap-3">
-          <span>© 2026</span>
-          <Badge
-            variant="outline"
-            className="text-[10px] bg-amber-50/60 border-amber-200 text-amber-800 dark:bg-amber-950/40 dark:border-amber-900 dark:text-amber-300"
-          >
-            Demo Build
-          </Badge>
+          <span>© 2026 Al Gurg Furniture Group. All rights reserved.</span>
         </div>
       </div>
     </footer>

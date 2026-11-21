@@ -153,7 +153,7 @@ function GeneratePaymentDialog({ open, onOpenChange }: { open: boolean; onOpenCh
               <SelectTrigger className="h-10"><SelectValue placeholder="Select project" /></SelectTrigger>
               <SelectContent>
                 {(projects ?? []).map((p: any) => (
-                  <SelectItem key={p.id} value={p.id}>{p.projectNo} — {p.name}</SelectItem>
+                  <SelectItem key={p.id} value={p.id}>{p.projectNo} - {p.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

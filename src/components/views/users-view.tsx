@@ -30,7 +30,7 @@ export function UsersView() {
               </Badge>
             ),
           },
-          { key: "phone", header: "Phone", render: (u) => u.phone || "—" },
+          { key: "phone", header: "Phone", render: (u) => u.phone || "-" },
           {
             key: "isActive",
             header: "Status",

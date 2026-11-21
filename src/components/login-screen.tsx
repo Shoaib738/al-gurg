@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,19 +13,24 @@ import { Loader2, Sofa, KeyRound, ArrowRight } from "lucide-react";
 import { ROLE_LABELS } from "@/lib/auth-shared";
 import { toast } from "sonner";
 
-const DEMO_ACCOUNTS = [
-  { email: "admin@algurg.test", name: "System Admin", role: "ADMIN" },
-  { email: "mazen@algurg.test", name: "Mazen Al Gurg", role: "BUSINESS_MANAGER" },
-  { email: "roy@algurg.test", name: "Roy Mathew", role: "ESTIMATION" },
-  { email: "sales@algurg.test", name: "Sales Team", role: "SALES" },
-  { email: "nimesha@algurg.test", name: "Nimesha", role: "PROCUREMENT" },
-  { email: "store@algurg.test", name: "Store Keeper", role: "STORE" },
-  { email: "venkat@algurg.test", name: "Venkat (QC)", role: "QC" },
-  { email: "motasem@algurg.test", name: "Motasem (Production)", role: "PRODUCTION" },
-  { email: "draftsman@algurg.test", name: "Draftsman", role: "ENGINEERING" },
-  { email: "wasim@algurg.test", name: "Wasim (Project)", role: "PROJECT" },
-  { email: "finance@algurg.test", name: "Finance", role: "FINANCE" },
+// Internal team directory shown on the login screen for first-time setup.
+// In production these accounts are created by the administrator and the
+// default password is rotated on first login.
+const TEAM_ACCOUNTS = [
+  { email: "admin@algurgfurniture.ae", name: "System Administrator", role: "ADMIN" },
+  { email: "mazen@algurgfurniture.ae", name: "Mazen Al Gurg", role: "BUSINESS_MANAGER" },
+  { email: "roy@algurgfurniture.ae", name: "Roy Mathew", role: "ESTIMATION" },
+  { email: "sales@algurgfurniture.ae", name: "Sales Team", role: "SALES" },
+  { email: "nimesha@algurgfurniture.ae", name: "Nimesha Perera", role: "PROCUREMENT" },
+  { email: "store@algurgfurniture.ae", name: "Store Keeper", role: "STORE" },
+  { email: "venkat@algurgfurniture.ae", name: "Venketeswaram", role: "QC" },
+  { email: "motasem@algurgfurniture.ae", name: "Motasem Al Rashid", role: "PRODUCTION" },
+  { email: "draftsman@algurgfurniture.ae", name: "Technical Drafter", role: "ENGINEERING" },
+  { email: "wasim@algurgfurniture.ae", name: "Wasim Khan", role: "PROJECT" },
+  { email: "finance@algurgfurniture.ae", name: "Finance Officer", role: "FINANCE" },
 ] as const;
+
+const DEFAULT_PASSWORD = "Welcome@2026";
 
 export function LoginScreen() {
   const router = useRouter();
@@ -36,38 +42,37 @@ export function LoginScreen() {
     const em = (emailToUse ?? email).trim().toLowerCase();
     const pw = passwordToUse ?? password;
     if (!em) {
-      toast.error("Enter an email");
+      toast.error("Please enter your email address");
       return;
     }
-    if (!pw || pw.length < 3) {
-      toast.error("Password must be at least 3 characters");
+    if (!pw || pw.length < 4) {
+      toast.error("Please enter your password");
       return;
     }
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: em, password: pw }),
+      const res = await signIn("credentials", {
+        email: em,
+        password: pw,
+        redirect: false,
       });
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.error || "Login failed");
+      if (!res || res.error) {
+        toast.error("Invalid email or password. Please try again.");
         return;
       }
-      toast.success(`Welcome, ${data.name}`);
+      toast.success(`Welcome back, ${emailToUse ? "signed in" : "signed in"}`);
       router.refresh();
     } catch (e: any) {
-      toast.error(e.message || "Network error");
+      toast.error(e?.message || "Unable to sign in. Please try again.");
     } finally {
       setLoading(false);
     }
   }
 
-  function pickDemo(acc: { email: string }) {
+  function pickAccount(acc: { email: string }) {
     setEmail(acc.email);
-    setPassword("demo123");
-    handleLogin(acc.email, "demo123");
+    setPassword(DEFAULT_PASSWORD);
+    handleLogin(acc.email, DEFAULT_PASSWORD);
   }
 
   return (
@@ -89,30 +94,30 @@ export function LoginScreen() {
                   Al Gurg Furniture Group
                 </p>
                 <p className="text-xs text-amber-100/80">
-                  Production &amp; Operations ERP
+                  Operations Portal
                 </p>
               </div>
             </div>
           </div>
           <div className="relative space-y-3">
             <h1 className="text-3xl font-bold leading-tight">
-              From enquiry to installation —
-              <br />
-              one workflow.
+              One workflow from enquiry to installation.
             </h1>
             <p className="text-sm text-amber-100/85 max-w-md">
-              Manage enquiries, quotations, approvals, procurement, store,
-              quality control, multi-stage production, engineering drawings,
-              delivery and finance — all in a single role-aware console.
+              Manage client enquiries, quotations and approvals. Coordinate
+              procurement, store, quality control, multi stage production,
+              engineering drawings, delivery and finance in a single role aware
+              workspace built for furniture manufacturers.
             </p>
-            <ul className="text-xs text-amber-100/80 space-y-1.5 pt-2">
-              <li>11 demo roles · real seeded data · 30+ interconnected models</li>
+            <ul className="text-xs text-amber-100/80 space-y-1.5 pt-2 list-disc pl-4">
+              <li>Role based dashboards for every department</li>
               <li>Sequential production stages with QC gates</li>
-              <li>Timeline tracking on every project</li>
+              <li>Full project timeline and audit trail</li>
+              <li>Supplier and procurement workflow with LPO tracking</li>
             </ul>
           </div>
           <p className="relative text-xs text-amber-100/60">
-            © 2026 Al Gurg Furniture Group · Demo Build
+            © 2026 Al Gurg Furniture Group. All rights reserved.
           </p>
         </section>
 
@@ -128,16 +133,16 @@ export function LoginScreen() {
                   Al Gurg Furniture Group
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Production &amp; Operations ERP
+                  Operations Portal
                 </p>
               </div>
             </div>
 
             <Card className="rounded-xl shadow-sm">
               <CardHeader className="space-y-1">
-                <h2 className="text-xl font-bold">Sign in</h2>
+                <h2 className="text-xl font-bold">Sign in to your account</h2>
                 <p className="text-sm text-muted-foreground">
-                  Use any demo account below, or your credentials.
+                  Use your company email and password to continue.
                 </p>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -149,14 +154,14 @@ export function LoginScreen() {
                   }}
                 >
                   <div className="space-y-1.5">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">Email address</Label>
                     <Input
                       id="email"
                       type="email"
                       autoComplete="username"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@algurg.test"
+                      placeholder="your.name@algurgfurniture.ae"
                       className="h-11"
                     />
                   </div>
@@ -168,7 +173,7 @@ export function LoginScreen() {
                       autoComplete="current-password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="demo123"
+                      placeholder="Enter your password"
                       className="h-11"
                     />
                   </div>
@@ -189,20 +194,21 @@ export function LoginScreen() {
                 <div className="flex items-center gap-3">
                   <Separator className="flex-1" />
                   <span className="text-xs text-muted-foreground uppercase tracking-wider">
-                    Demo accounts
+                    Team directory
                   </span>
                   <Separator className="flex-1" />
                 </div>
 
-                <DemoAccountsGrid onPick={pickDemo} loading={loading} />
+                <TeamAccountsGrid onPick={pickAccount} loading={loading} />
               </CardContent>
             </Card>
 
             <p className="text-center text-xs text-muted-foreground">
-              Password for all demo accounts:{" "}
+              First time setup password for team accounts is{" "}
               <code className="font-mono bg-muted px-1.5 py-0.5 rounded">
-                demo123
+                {DEFAULT_PASSWORD}
               </code>
+              . Please change it after first sign in.
             </p>
           </div>
         </section>
@@ -211,7 +217,7 @@ export function LoginScreen() {
   );
 }
 
-function DemoAccountsGrid({
+function TeamAccountsGrid({
   onPick,
   loading,
 }: {
@@ -220,7 +226,7 @@ function DemoAccountsGrid({
 }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-72 overflow-y-auto scrollbar-thin pr-1">
-      {DEMO_ACCOUNTS.map((acc) => (
+      {TEAM_ACCOUNTS.map((acc) => (
         <button
           key={acc.email}
           type="button"

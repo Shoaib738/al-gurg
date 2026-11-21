@@ -49,7 +49,7 @@ export function RedFlagsDelaysView({ user, tab }: { user: SessionUser; tab: stri
     <div className="space-y-4">
       <PageHeader
         title="Red Flags & Delays"
-        description="Escalations across departments — resolution required"
+        description="Escalations across departments - resolution required"
         actions={
           <>
             <Button variant="outline" onClick={() => openRaise("delay")}>
@@ -215,14 +215,14 @@ function RaiseDialog({
               <SelectTrigger className="h-10"><SelectValue placeholder="Select project" /></SelectTrigger>
               <SelectContent>
                 {(projects ?? []).map((p: any) => (
-                  <SelectItem key={p.id} value={p.id}>{p.projectNo} — {p.name}</SelectItem>
+                  <SelectItem key={p.id} value={p.id}>{p.projectNo} - {p.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="grid gap-1.5">
             <Label>Department</Label>
-            <Input value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="Procurement / Production / …" />
+            <Input value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="Procurement / Production / ..." />
           </div>
           <div className="grid gap-1.5">
             <Label>Reason</Label>

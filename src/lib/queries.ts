@@ -73,7 +73,7 @@ export function useAction() {
         body: JSON.stringify(payload),
       }),
     onSuccess: () => {
-      // Invalidate broadly — single-page app, all data may be affected
+      // Invalidate broadly - single-page app, all data may be affected
       qc.invalidateQueries();
     },
   });
@@ -86,4 +86,58 @@ export function useSession() {
       fetchJson<{ user: any }>(`/api/auth/me`),
     staleTime: 60_000,
   });
+}
+
+// File upload helper. Pass a File and optional metadata. Returns the uploaded
+// file record including its public URL.
+export function useUploadFile() {
+  return useMutation({
+    mutationFn: async (input: {
+      file: File;
+      category?: string;
+      refType?: string;
+      refId?: string;
+    }) => {
+      const form = new FormData();
+      form.append("file", input.file);
+      if (input.category) form.append("category", input.category);
+      if (input.refType) form.append("refType", input.refType);
+      if (input.refId) form.append("refId", input.refId);
+      const res = await fetch("/api/upload", { method: "POST", body: form });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || "Upload failed");
+      }
+      return data as {
+        id: string;
+        filename: string;
+        url: string;
+        mimeType: string;
+        size: number;
+        category: string;
+      };
+    },
+  });
+}
+
+// Reusable file input button that uploads on selection and calls back with the URL.
+export function useFilePicker(
+  onUploaded: (url: string, filename: string) => void,
+  category = "attachment"
+) {
+  return {
+    async onFile(e: React.ChangeEvent<HTMLInputElement>) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const form = new FormData();
+      form.append("file", file);
+      form.append("category", category);
+      const res = await fetch("/api/upload", { method: "POST", body: form });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Upload failed");
+      onUploaded(data.url, data.filename);
+      // Reset input so the same file can be re-selected later
+      e.target.value = "";
+    },
+  };
 }

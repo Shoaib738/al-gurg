@@ -114,7 +114,7 @@ function PendingDeliveryTable({ items, user }: { items: any[]; user: SessionUser
           type="DELIVERY_INSPECTION"
           refType="LPO"
           refId={target.lpoId}
-          title={`QC — ${target.grnNo}`}
+          title={`QC - ${target.grnNo}`}
         />
       )}
     </>
@@ -152,7 +152,7 @@ function PendingStagesTable({ items, user }: { items: any[]; user: SessionUser }
           refType="ProductionStage"
           refId={target.id}
           productionStageId={target.id}
-          title={`QC — ${target.stageName}`}
+          title={`QC - ${target.stageName}`}
         />
       )}
     </>

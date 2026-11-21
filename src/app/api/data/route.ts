@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth";
+import { sendEmail } from "@/lib/email";
 import { Prisma, UserRole } from "@prisma/client";
 
 export const runtime = "nodejs";
@@ -1140,7 +1141,7 @@ async function handlePost(payload: any, session: any) {
         ["FINANCE"],
         "QUOTATION_SIGNED",
         "Quotation signed by client",
-        `${q.quotationNo} signed — please generate payment link`,
+        `${q.quotationNo} signed - please generate payment link`,
         "QUOTATION",
         payload.id
       );
@@ -1232,7 +1233,7 @@ async function handlePost(payload: any, session: any) {
         enquiryId: q.enquiryId,
         userId: uid,
         stage: "LPO_RECEIVED",
-        message: `Client LPO received (ref: ${payload.lpoRef || "—"})`,
+        message: `Client LPO received (ref: ${payload.lpoRef || "-"})`,
       });
       return { success: true };
     }
@@ -1250,7 +1251,7 @@ async function handlePost(payload: any, session: any) {
         project = await db.project.create({
           data: {
             projectNo,
-            name: `Project — ${q.quotationNo}`,
+            name: `Project - ${q.quotationNo}`,
             enquiryId: q.enquiryId,
             quotationId: q.id,
             clientId: q.clientId,
@@ -1275,28 +1276,39 @@ async function handlePost(payload: any, session: any) {
         enquiryId: q.enquiryId,
         userId: uid,
         stage: "ORDER_RELEASED",
-        message: `Order released — Project ${project.projectNo} created`,
+        message: `Order released - Project ${project.projectNo} created`,
       });
-      // Simulated multi-dept email notification
+      // Notify procurement, engineering, production and project departments in app
       await notifyUsers(
         ["PROCUREMENT", "ENGINEERING", "PRODUCTION", "PROJECT"],
         "ORDER_RELEASED",
         "New order released",
-        `Project ${project.projectNo} (QTN ${q.quotationNo}) — please begin your workflow`,
+        `Project ${project.projectNo} (Quotation ${q.quotationNo}). Please begin your workflow.`,
         "PROJECT",
         project.id
       );
+      // Send outbound email to procurement with engineering, production and project on CC.
+      const orderReleaseEmailSubject = `Order Released | Project ${project.projectNo} (${q.quotationNo})`;
+      const orderReleaseEmailBody = `Dear Team,<br/><br/>Order has been released for Project ${project.projectNo} (Quotation ${q.quotationNo}, AED ${Math.round(
+        q.total
+      )}).<br/><br/>Please initiate your respective workflows:<br/>  • Procurement: prepare BOQ-M, check stock, raise MRQ<br/>  • Engineering: prepare drawings for client approval<br/>  • Production: plan joinery and metal stages<br/>  • Project Department: schedule site visit<br/><br/>Regards,<br/>Estimation Department`;
+      await sendEmail({
+        to: "procurement@algurgfurniture.ae",
+        cc: ["engineering@algurgfurniture.ae", "production@algurgfurniture.ae", "project@algurgfurniture.ae"],
+        subject: orderReleaseEmailSubject,
+        body: orderReleaseEmailBody,
+        refType: "ORDER_RELEASE",
+        refId: project.id,
+      });
       return {
         success: true,
         projectId: project.id,
         projectNo: project.projectNo,
         email: {
-          to: "procurement@algurg.test",
-          cc: ["engineering@algurg.test", "production@algurg.test", "project@algurg.test"],
-          subject: `Order Released — Project ${project.projectNo} (${q.quotationNo})`,
-          body: `Dear Team,\n\nOrder has been released for Project ${project.projectNo} (Quotation ${q.quotationNo}, AED ${Math.round(
-            q.total
-          )}).\n\nPlease initiate your respective workflows:\n  • Procurement: prepare BOQ-M, check stock, raise MRQ\n  • Engineering: prepare drawings for client approval\n  • Production: plan joinery & metal stages\n  • Project Dept: schedule site visit\n\nRegards,\nEstimation Department`,
+          to: "procurement@algurgfurniture.ae",
+          cc: ["engineering@algurgfurniture.ae", "production@algurgfurniture.ae", "project@algurgfurniture.ae"],
+          subject: orderReleaseEmailSubject,
+          body: orderReleaseEmailBody,
           timestamp: new Date().toISOString(),
         },
       };
@@ -1360,7 +1372,7 @@ async function handlePost(payload: any, session: any) {
         ["PROCUREMENT"],
         "BOQ_ISSUED",
         "BOQ issued for procurement",
-        `${boq.boqNo} for ${boq.project?.name} — please check stock & raise MRQ`,
+        `${boq.boqNo} for ${boq.project?.name} - please check stock & raise MRQ`,
         "BOQ",
         boq.id
       );
@@ -1422,7 +1434,7 @@ async function handlePost(payload: any, session: any) {
         "Supplier quote awaiting approval",
         `Supplier quote AED ${Math.round(
           sq.totalAmount
-        )} for MRQ — please review`,
+        )} for MRQ - please review`,
         "SUPPLIER_QUOTE",
         sq.id
       );
@@ -1559,21 +1571,32 @@ async function handlePost(payload: any, session: any) {
         ["STORE"],
         "LPO_SENT_CC",
         "LPO sent to supplier (CC)",
-        `${lpo.lpoNo} sent to ${lpo.supplier.name} — please expect delivery`,
+        `${lpo.lpoNo} sent to ${lpo.supplier.name} - please expect delivery`,
         "LPO",
         lpo.id
       );
+      // Send outbound LPO email to supplier with store on CC.
+      const lpoEmailSubject = `Local Purchase Order ${lpo.lpoNo}`;
+      const lpoEmailBody = `Dear ${lpo.supplier.name},<br/><br/>Please find Local Purchase Order ${lpo.lpoNo} attached.<br/>Project: ${lpo.project?.name}<br/>Total: AED ${Math.round(
+        lpo.totalAmount
+      )}<br/>Expected delivery: ${new Date(
+        lpo.expectedDelivery || Date.now()
+      ).toDateString()}<br/><br/>Regards,<br/>Procurement Department<br/>Al Gurg Furniture Group`;
+      await sendEmail({
+        to: lpo.supplier.email || "supplier@example.com",
+        cc: ["store@algurgfurniture.ae"],
+        subject: lpoEmailSubject,
+        body: lpoEmailBody,
+        refType: "LPO_SENT",
+        refId: lpo.id,
+      });
       return {
         success: true,
         email: {
           to: lpo.supplier.email || "supplier@example.com",
-          cc: ["store@algurg.test"],
-          subject: `Local Purchase Order ${lpo.lpoNo}`,
-          body: `Dear ${lpo.supplier.name},\n\nPlease find LPO ${lpo.lpoNo} attached.\nProject: ${lpo.project?.name}\nTotal: AED ${Math.round(
-            lpo.totalAmount
-          )}\nExpected delivery: ${new Date(
-            lpo.expectedDelivery || Date.now()
-          ).toDateString()}\n\nRegards,\nProcurement Department — Al Gurg Furniture`,
+          cc: ["store@algurgfurniture.ae"],
+          subject: lpoEmailSubject,
+          body: lpoEmailBody,
           timestamp: new Date().toISOString(),
         },
       };
@@ -1613,13 +1636,13 @@ async function handlePost(payload: any, session: any) {
         projectId: lpo.projectId,
         userId: uid,
         stage: "GRN_CREATED",
-        message: `GRN ${grnNo} created for ${lpo.lpoNo} — QC pending`,
+        message: `GRN ${grnNo} created for ${lpo.lpoNo} - QC pending`,
       });
       await notifyUsers(
         ["QC"],
         "QC_PENDING_DELIVERY",
         "Delivery awaiting QC inspection",
-        `${grnNo} for ${lpo.lpoNo} — please inspect`,
+        `${grnNo} for ${lpo.lpoNo} - please inspect`,
         "GRN",
         grn.id
       );
@@ -1707,26 +1730,36 @@ async function handlePost(payload: any, session: any) {
             message: `Delivery QC ${payload.status} for GRN ${grn.grnNo}`,
           });
         }
-        // Simulated email: procurement + info + stores + production
+        // Notify procurement, store and production in app
         await notifyUsers(
           ["PROCUREMENT", "STORE", "PRODUCTION"],
           "QC_DELIVERY_RESULT",
           `Delivery QC ${payload.status}`,
-          `QC report ${rep.reportNo} — ${payload.status}`,
+          `QC report ${rep.reportNo}. Status ${payload.status}.`,
           "QC_REPORT",
           rep.id
         );
+        // Send outbound QC report email to procurement with info, stores and production on CC.
+        const qcEmailSubject = `QC Report ${rep.reportNo} | ${payload.status}`;
+        const missingItemsText = payload.missingItems?.length
+          ? payload.missingItems.join(", ")
+          : "none";
+        const qcEmailBody = `QC inspection completed.<br/>Report: ${rep.reportNo}<br/>Status: ${payload.status}<br/>Remarks: ${payload.remarks || "n/a"}<br/>Missing items: ${missingItemsText}<br/><br/>Regards,<br/>Quality Control Department<br/>Al Gurg Furniture Group`;
+        await sendEmail({
+          to: "procurement@algurgfurniture.ae",
+          cc: ["info@algurgfurniture.ae", "store@algurgfurniture.ae", "production@algurgfurniture.ae"],
+          subject: qcEmailSubject,
+          body: qcEmailBody,
+          refType: "QC_REPORT",
+          refId: rep.id,
+        });
         return {
           success: true,
           email: {
-            to: "procurement@algurg.test",
-            cc: ["info@algurg.test", "stores@algurg.test", "production@algurg.test"],
-            subject: `QC Report ${rep.reportNo} — ${payload.status}`,
-            body: `QC inspection completed.\nReport: ${rep.reportNo}\nStatus: ${payload.status}\nRemarks: ${payload.remarks || "—"}\nMissing items: ${
-              payload.missingItems?.length
-                ? payload.missingItems.join(", ")
-                : "none"
-            }`,
+            to: "procurement@algurgfurniture.ae",
+            cc: ["info@algurgfurniture.ae", "store@algurgfurniture.ae", "production@algurgfurniture.ae"],
+            subject: qcEmailSubject,
+            body: qcEmailBody,
             timestamp: new Date().toISOString(),
           },
         };
@@ -1754,7 +1787,7 @@ async function handlePost(payload: any, session: any) {
               ["PRODUCTION"],
               "STAGE_QC_PASSED",
               "Stage QC passed",
-              `${stage.stageName} passed QC — next stage unlocked`,
+              `${stage.stageName} passed QC - next stage unlocked`,
               "STAGE",
               stage.id
             );
@@ -1842,7 +1875,7 @@ async function handlePost(payload: any, session: any) {
           projectId: stage.productionOrder.projectId,
           userId: uid,
           stage: "STAGE_COMPLETED",
-          message: `Stage "${stage.stageName}" completed — awaiting QC`,
+          message: `Stage "${stage.stageName}" completed - awaiting QC`,
         });
         await notifyUsers(
           ["QC"],
@@ -1896,7 +1929,7 @@ async function handlePost(payload: any, session: any) {
         userId: uid,
         stage: "STAGE_QC_PASSED",
         message: `Stage "${stage.stageName}" QC PASSED${
-          next ? ` — next: ${next.stageName}` : ""
+          next ? ` - next: ${next.stageName}` : ""
         }`,
       });
       return { success: true, nextStageId: next?.id ?? null };
@@ -1937,13 +1970,13 @@ async function handlePost(payload: any, session: any) {
         projectId: stage.productionOrder.projectId,
         userId: uid,
         stage: "STAGE_QC_FAILED",
-        message: `Stage "${stage.stageName}" QC FAILED — rework required`,
+        message: `Stage "${stage.stageName}" QC FAILED - rework required`,
       });
       await notifyUsers(
         ["PRODUCTION", "BUSINESS_MANAGER"],
         "STAGE_QC_FAILED",
         "Stage QC failed",
-        `${stage.stageName} failed QC — rework required`,
+        `${stage.stageName} failed QC - rework required`,
         "STAGE",
         stage.id
       );
@@ -2076,7 +2109,7 @@ async function handlePost(payload: any, session: any) {
         ["PRODUCTION", "ENGINEERING"],
         "DRAWING_APPROVED",
         "Drawing approved",
-        `${d.drawingNo} approved — production can start`,
+        `${d.drawingNo} approved - production can start`,
         "DRAWING",
         d.id
       );
@@ -2101,7 +2134,7 @@ async function handlePost(payload: any, session: any) {
         projectId: payload.projectId,
         userId: uid,
         stage: "DELIVERY_ACK",
-        message: `Delivery acknowledged — client signed: ${payload.clientSigned ? "Yes" : "No"}`,
+        message: `Delivery acknowledged - client signed: ${payload.clientSigned ? "Yes" : "No"}`,
       });
       return { success: true, id: d.id };
     }
@@ -2170,13 +2203,13 @@ async function handlePost(payload: any, session: any) {
         projectId: payload.projectId,
         userId: uid,
         stage: "FEEDBACK",
-        message: `Customer feedback submitted (overall: ${ratings.overall || "—"}/5)`,
+        message: `Customer feedback submitted (overall: ${ratings.overall || "-"}/5)`,
       });
       await notifyUsers(
         ["FINANCE", "BUSINESS_MANAGER"],
         "FEEDBACK_SUBMITTED",
         "Customer feedback received",
-        `Project feedback submitted — claim final payment`,
+        `Project feedback submitted - claim final payment`,
         "PROJECT",
         payload.projectId
       );
@@ -2189,7 +2222,7 @@ async function handlePost(payload: any, session: any) {
         data: {
           projectId: payload.projectId,
           raisedById: uid,
-          department: payload.department || "—",
+          department: payload.department || "-",
           reason: payload.reason,
           severity: payload.severity || "MEDIUM",
           daysDelayed: Number(payload.daysDelayed) || 0,
@@ -2239,7 +2272,7 @@ async function handlePost(payload: any, session: any) {
         data: {
           projectId: payload.projectId,
           raisedById: uid,
-          department: payload.department || "—",
+          department: payload.department || "-",
           reason: payload.reason,
           daysDelayed: Number(payload.daysDelayed) || 0,
           status: "OPEN",

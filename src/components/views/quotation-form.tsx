@@ -195,7 +195,7 @@ export function QuotationForm({
             {editQuotation ? `Edit ${editQuotation.quotationNo}` : "Create quotation"}
           </DialogTitle>
           <DialogDescription>
-            Build line items — unit price = (material cost + labor hours × rate) × 1.4 margin.
+            Build line items - unit price = (material cost + labor hours × rate) × 1.4 margin.
           </DialogDescription>
         </DialogHeader>
 
@@ -209,7 +209,7 @@ export function QuotationForm({
                   <SelectContent>
                     {(enquiries ?? []).map((e: any) => (
                       <SelectItem key={e.id} value={e.id}>
-                        {e.enquiryNo} — {e.title} ({e.client?.name})
+                        {e.enquiryNo} - {e.title} ({e.client?.name})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -240,7 +240,7 @@ export function QuotationForm({
                         <Input
                           value={it.description}
                           onChange={(e) => update(idx, { description: e.target.value })}
-                          placeholder="Wardrobe 3-door…"
+                          placeholder="Wardrobe 3-door..."
                           className="h-8 text-xs"
                         />
                       </TableCell>

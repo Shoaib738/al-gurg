@@ -95,7 +95,7 @@ export function ProductionView({ user }: { user: SessionUser }) {
           refType="ProductionStage"
           refId={qcTarget.stageId}
           productionStageId={qcTarget.stageId}
-          title={`QC — ${qcTarget.stageName}`}
+          title={`QC - ${qcTarget.stageName}`}
         />
       )}
     </div>
@@ -136,7 +136,7 @@ function CreateProductionOrderDialog({ open, onOpenChange }: { open: boolean; on
               <SelectTrigger className="h-10"><SelectValue placeholder="Select project" /></SelectTrigger>
               <SelectContent>
                 {(projects ?? []).map((p: any) => (
-                  <SelectItem key={p.id} value={p.id}>{p.projectNo} — {p.name}</SelectItem>
+                  <SelectItem key={p.id} value={p.id}>{p.projectNo} - {p.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

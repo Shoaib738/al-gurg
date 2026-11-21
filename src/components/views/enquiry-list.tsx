@@ -98,18 +98,18 @@ function EnquiryDetailDialog({
         <DialogHeader>
           <DialogTitle>{data?.enquiryNo ?? "Enquiry detail"}</DialogTitle>
           <DialogDescription>
-            {data?.client?.name} · {formatDate(data?.enquiryDate)}
+            {data?.client?.name}, {formatDate(data?.enquiryDate)}
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="max-h-[70vh]">
           {isLoading ? (
-            <p className="text-sm text-muted-foreground p-4">Loading…</p>
+            <p className="text-sm text-muted-foreground p-4">Loading...</p>
           ) : data ? (
             <div className="space-y-4 p-1">
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <Field label="Title" value={data.title} />
-                <Field label="Project type" value={data.projectType || "—"} />
-                <Field label="Location" value={data.location || "—"} />
+                <Field label="Project type" value={data.projectType || "-"} />
+                <Field label="Location" value={data.location || "-"} />
                 <Field label="Source" value={data.source} />
                 <Field label="Sales" value={data.salesUser?.name} />
                 <Field label="Status" value={<StatusBadge status={data.status} />} />
@@ -251,11 +251,11 @@ function CreateEnquiryDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
               <Label>Project type</Label>
-              <Input value={form.projectType} onChange={(e) => setForm({ ...form, projectType: e.target.value })} placeholder="Wardrobe / kitchen…" />
+              <Input value={form.projectType} onChange={(e) => setForm({ ...form, projectType: e.target.value })} placeholder="Wardrobe / kitchen..." />
             </div>
             <div className="grid gap-1.5">
               <Label>Location</Label>
-              <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Dubai Marina…" />
+              <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Dubai Marina..." />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">

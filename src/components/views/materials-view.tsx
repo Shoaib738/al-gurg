@@ -50,7 +50,7 @@ export function MaterialsView({ user }: { user: SessionUser }) {
         data={data}
         columns={[
           { key: "name", header: "Name", render: (m) => <span className="font-medium">{m.name}</span> },
-          { key: "spec", header: "Spec", render: (m) => m.spec || "—" },
+          { key: "spec", header: "Spec", render: (m) => m.spec || "-" },
           { key: "unit", header: "Unit", render: (m) => <Badge variant="outline" className="text-[10px]">{m.unit}</Badge> },
           { key: "unitPrice", header: "Unit price", render: (m) => formatCurrency(m.unitPrice) },
           { key: "supplier", header: "Supplier", render: (m) => m.supplier?.name },
@@ -107,7 +107,7 @@ function CreateMaterialDialog({ open, onOpenChange }: { open: boolean; onOpenCha
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
               <Label>Spec</Label>
-              <Input value={form.spec} onChange={(e) => setForm({ ...form, spec: e.target.value })} placeholder="18mm / grade A…" />
+              <Input value={form.spec} onChange={(e) => setForm({ ...form, spec: e.target.value })} placeholder="18mm / grade A..." />
             </div>
             <div className="grid gap-1.5">
               <Label>Unit</Label>

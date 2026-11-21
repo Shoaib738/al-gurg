@@ -99,7 +99,7 @@ export function QuotationDetail({
 
       <PageHeader
         title={`${q.quotationNo}`}
-        description={`${q.client?.name} · ${q.enquiry?.enquiryNo ?? "—"}`}
+        description={`${q.client?.name}, ${q.enquiry?.enquiryNo ?? "-"}`}
         actions={<StatusBadge status={q.status} />}
       />
 
@@ -108,8 +108,8 @@ export function QuotationDetail({
           <CardHeader><CardTitle className="text-sm">Client</CardTitle></CardHeader>
           <CardContent className="text-sm space-y-1">
             <p className="font-medium">{q.client?.name}</p>
-            <p className="text-muted-foreground">{q.client?.company || q.client?.email || "—"}</p>
-            <p className="text-muted-foreground">{q.client?.phone || "—"}</p>
+            <p className="text-muted-foreground">{q.client?.company || q.client?.email || "-"}</p>
+            <p className="text-muted-foreground">{q.client?.phone || "-"}</p>
           </CardContent>
         </Card>
         <Card>
@@ -126,7 +126,7 @@ export function QuotationDetail({
           <CardContent className="text-sm space-y-1">
             <Row label="Created by" value={q.creator?.name} />
             <Row label="Created" value={formatDate(q.createdAt)} />
-            <Row label="Approved by" value={q.approver?.name ?? "—"} />
+            <Row label="Approved by" value={q.approver?.name ?? "-"} />
             <Row label="Approved at" value={formatDate(q.approvedAt)} />
             <Row label="Sent" value={formatDate(q.sentAt)} />
             <Row label="Signed" value={formatDate(q.signedAt)} />
@@ -211,7 +211,7 @@ export function QuotationDetail({
               label="Release order"
               icon={Rocket}
               className="bg-amber-700 hover:bg-amber-800"
-              successMessage="Order released — project created"
+              successMessage="Order released - project created"
               onSuccess={(data) => setEmailPreview(data.email)}
             />
           )}
@@ -271,7 +271,7 @@ export function QuotationDetail({
                         <p className="text-muted-foreground">{it.material}</p>
                       )}
                     </TableCell>
-                    <TableCell className="text-xs">{it.spec || "—"}</TableCell>
+                    <TableCell className="text-xs">{it.spec || "-"}</TableCell>
                     <TableCell className="text-xs">{it.qty} {it.unit}</TableCell>
                     <TableCell className="text-xs">{formatCurrency(it.materialCost)}</TableCell>
                     <TableCell className="text-xs">{it.laborHours}h × {formatCurrency(it.laborRate)}</TableCell>
@@ -373,7 +373,7 @@ export function QuotationDetail({
         onOpenChange={setPaymentOpen}
         quotationTotal={q.total}
         onSubmit={async (amount) => {
-          // create project if not exists via release-order? No — finance just generates link, needs a project.
+          // create project if not exists via release-order? No - finance just generates link, needs a project.
           // For demo: generate link against any existing project for this client, or quote-only link.
           const res = await fetch("/api/data", {
             method: "POST",
@@ -449,7 +449,7 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex justify-between gap-2">
       <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium text-right">{value ?? "—"}</span>
+      <span className="font-medium text-right">{value ?? "-"}</span>
     </div>
   );
 }
@@ -474,7 +474,7 @@ function CommentDialog({
           rows={4}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Your comment or revision note…"
+          placeholder="Your comment or revision note..."
         />
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
@@ -506,7 +506,7 @@ function RejectDialog({
           rows={4}
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          placeholder="Reason for rejection…"
+          placeholder="Reason for rejection..."
         />
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>

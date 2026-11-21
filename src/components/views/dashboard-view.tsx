@@ -159,7 +159,7 @@ function AdminDashboard({
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">{p.name}</p>
                       <p className="text-xs text-muted-foreground truncate">
-                        {p.projectNo} · {p.client?.name}
+                        {p.projectNo}, {p.client?.name}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -184,8 +184,8 @@ function AdminDashboard({
                   <div key={e.id} className="p-3">
                     <p className="text-sm">{e.message}</p>
                     <p className="text-xs text-muted-foreground">
-                      {e.project?.name ?? e.stage} · {formatRelativeTime(e.createdAt)}
-                      {e.user?.name ? ` · ${e.user.name}` : ""}
+                      {e.project?.name ?? e.stage}, {formatRelativeTime(e.createdAt)}
+                      {e.user?.name ? `, ${e.user.name}` : ""}
                     </p>
                   </div>
                 ))}
@@ -354,7 +354,7 @@ function BmDashboard({
                       {p.redFlags.length}
                     </Badge>
                   ) : (
-                    "—"
+                    "-"
                   ),
               },
             ]}
@@ -411,7 +411,7 @@ function EstimationDashboard({
                 key: "quotations",
                 header: "Quoted?",
                 render: (e) =>
-                  e.quotations?.length ? `${e.quotations.length} draft` : "—",
+                  e.quotations?.length ? `${e.quotations.length} draft` : "-",
               },
             ]}
           />
@@ -766,13 +766,13 @@ function ProjectDeptDashboard({ data }: { data: any }) {
               {
                 key: "ack",
                 header: "Delivery",
-                render: (p) => (p.deliveryAck ? "Signed" : "—"),
+                render: (p) => (p.deliveryAck ? "Signed" : "-"),
               },
               {
                 key: "inst",
                 header: "Installation",
                 render: (p) =>
-                  p.installation ? <StatusBadge status={p.installation.status} /> : "—",
+                  p.installation ? <StatusBadge status={p.installation.status} /> : "-",
               },
             ]}
           />

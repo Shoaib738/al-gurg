@@ -71,7 +71,7 @@ export function DataTable<T extends { id?: string }>({
                 <TableCell key={c.key} className={c.className}>
                   {c.render
                     ? c.render(row)
-                    : ((row as any)[c.key] ?? "—")}
+                    : ((row as any)[c.key] ?? "-")}
                 </TableCell>
               ))}
               {rightSlot && <TableCell className="text-right">{rightSlot}</TableCell>}

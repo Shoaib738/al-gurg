@@ -19,6 +19,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { FileUploadButton, UploadedFileChip } from "../file-upload-button";
 import {
   Select,
   SelectContent,
@@ -81,11 +82,11 @@ function DrawingDetailDialog({ id, onOpenChange, user }: { id: string | null; on
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{d?.drawingNo ?? "Drawing"}</DialogTitle>
-          <DialogDescription>{d?.project?.name} · {d?.drawingType}</DialogDescription>
+          <DialogDescription>{d?.project?.name}, {d?.drawingType}</DialogDescription>
         </DialogHeader>
         <ScrollArea className="max-h-[70vh]">
           {isLoading ? (
-            <p className="p-4 text-sm text-muted-foreground">Loading…</p>
+            <p className="p-4 text-sm text-muted-foreground">Loading...</p>
           ) : d ? (
             <div className="space-y-3 text-sm p-1">
               <div className="flex justify-between"><span className="text-muted-foreground">Status</span><StatusBadge status={d.status} /></div>
@@ -178,7 +179,7 @@ function CreateDrawingDialog({ open, onOpenChange }: { open: boolean; onOpenChan
   const [projectId, setProjectId] = useState("");
   const [drawingType, setDrawingType] = useState("shop drawing");
   const [remarks, setRemarks] = useState("");
-  const [attachments, setAttachments] = useState("");
+  const [attachments, setAttachments] = useState<{ url: string; filename: string }[]>([]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -193,7 +194,7 @@ function CreateDrawingDialog({ open, onOpenChange }: { open: boolean; onOpenChan
               <SelectTrigger className="h-10"><SelectValue placeholder="Select project" /></SelectTrigger>
               <SelectContent>
                 {(projects ?? []).map((p: any) => (
-                  <SelectItem key={p.id} value={p.id}>{p.projectNo} — {p.name}</SelectItem>
+                  <SelectItem key={p.id} value={p.id}>{p.projectNo} - {p.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -210,8 +211,28 @@ function CreateDrawingDialog({ open, onOpenChange }: { open: boolean; onOpenChan
             </Select>
           </div>
           <div className="grid gap-1.5">
-            <Label>Attachments (comma-separated file names)</Label>
-            <Input value={attachments} onChange={(e) => setAttachments(e.target.value)} placeholder="plan.pdf, elevation.png" />
+            <Label>Drawing files</Label>
+            <FileUploadButton
+              category="drawing"
+              refType="drawing"
+              refId={projectId || undefined}
+              accept="image/*,application/pdf"
+              multiple
+              label="Upload drawing files"
+              onUploaded={(files) => setAttachments((prev) => [...prev, ...files])}
+            />
+            {attachments.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {attachments.map((a, i) => (
+                  <UploadedFileChip
+                    key={i}
+                    url={a.url}
+                    filename={a.filename}
+                    onRemove={() => setAttachments((prev) => prev.filter((_, j) => j !== i))}
+                  />
+                ))}
+              </div>
+            )}
           </div>
           <div className="grid gap-1.5">
             <Label>Remarks</Label>
@@ -229,10 +250,14 @@ function CreateDrawingDialog({ open, onOpenChange }: { open: boolean; onOpenChan
                   projectId,
                   drawingType,
                   remarks,
-                  attachmentsJson: attachments ? attachments.split(",").map((s) => s.trim()) : [],
+                  attachmentsJson: attachments.map((a) => a.url),
                 },
                 {
-                  onSuccess: () => { toast.success("Drawing created"); onOpenChange(false); },
+                  onSuccess: () => {
+                    toast.success("Drawing created");
+                    onOpenChange(false);
+                    setAttachments([]);
+                  },
                   onError: (e: any) => toast.error(e.message),
                 }
               )

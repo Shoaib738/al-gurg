@@ -50,16 +50,16 @@ export function ClientsView({ user }: { user: SessionUser }) {
         columns={[
           { key: "name", header: "Name", render: (c) => <span className="font-medium">{c.name}</span> },
           { key: "type", header: "Type", render: (c) => <Badge variant="outline" className="text-[10px]">{c.type}</Badge> },
-          { key: "company", header: "Company", render: (c) => c.company || "—" },
-          { key: "contactPerson", header: "Contact", render: (c) => c.contactPerson || "—" },
-          { key: "email", header: "Email", render: (c) => c.email || "—" },
-          { key: "phone", header: "Phone", render: (c) => c.phone || "—" },
+          { key: "company", header: "Company", render: (c) => c.company || "-" },
+          { key: "contactPerson", header: "Contact", render: (c) => c.contactPerson || "-" },
+          { key: "email", header: "Email", render: (c) => c.email || "-" },
+          { key: "phone", header: "Phone", render: (c) => c.phone || "-" },
           {
             key: "counts",
             header: "Activity",
             render: (c) => (
               <span className="text-xs text-muted-foreground">
-                {c._count?.enquiries ?? 0} enq · {c._count?.quotations ?? 0} qtn · {c._count?.projects ?? 0} prj
+                {c._count?.enquiries ?? 0} enq, {c._count?.quotations ?? 0} qtn, {c._count?.projects ?? 0} prj
               </span>
             ),
           },

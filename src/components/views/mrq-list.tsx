@@ -81,7 +81,7 @@ function MrqDetailDialog({ id, onOpenChange, user }: { id: string | null; onOpen
           </DialogHeader>
           <ScrollArea className="max-h-[70vh]">
             {isLoading ? (
-              <p className="p-4 text-sm text-muted-foreground">Loading…</p>
+              <p className="p-4 text-sm text-muted-foreground">Loading...</p>
             ) : m ? (
               <div className="space-y-3 p-1">
                 <div className="flex items-center justify-between">
@@ -96,9 +96,9 @@ function MrqDetailDialog({ id, onOpenChange, user }: { id: string | null; onOpen
                   data={m.items}
                   columns={[
                     { key: "description", header: "Description" },
-                    { key: "spec", header: "Spec", render: (i: any) => i.spec || "—" },
+                    { key: "spec", header: "Spec", render: (i: any) => i.spec || "-" },
                     { key: "qty", header: "Qty", render: (i: any) => `${i.qty} ${i.unit}` },
-                    { key: "quotedPrice", header: "Quoted", render: (i: any) => i.quotedPrice ? formatCurrency(i.quotedPrice) : "—" },
+                    { key: "quotedPrice", header: "Quoted", render: (i: any) => i.quotedPrice ? formatCurrency(i.quotedPrice) : "-" },
                   ]}
                 />
                 {m.supplierQuotes?.length > 0 && (
@@ -167,7 +167,7 @@ function CreateMrqDialog({ open, onOpenChange }: { open: boolean; onOpenChange: 
               <SelectTrigger className="h-10"><SelectValue placeholder="Select project" /></SelectTrigger>
               <SelectContent>
                 {(lookup.data?.projects ?? []).map((p: any) => (
-                  <SelectItem key={p.id} value={p.id}>{p.projectNo} — {p.name}</SelectItem>
+                  <SelectItem key={p.id} value={p.id}>{p.projectNo} - {p.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

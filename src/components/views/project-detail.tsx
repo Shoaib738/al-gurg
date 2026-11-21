@@ -62,7 +62,7 @@ export function ProjectDetail({
       </Button>
       <PageHeader
         title={p.name}
-        description={`${p.projectNo} · ${p.client?.name}`}
+        description={`${p.projectNo}, ${p.client?.name}`}
         actions={<StatusBadge status={p.status} />}
       />
 
@@ -129,7 +129,7 @@ function OverviewTab({ p }: { p: any }) {
           <CardContent className="p-4 space-y-1 text-sm">
             <p className="text-xs text-muted-foreground">Client</p>
             <p className="font-medium">{p.client?.name}</p>
-            <p className="text-xs text-muted-foreground">{p.client?.email || "—"}</p>
+            <p className="text-xs text-muted-foreground">{p.client?.email || "-"}</p>
           </CardContent>
         </Card>
         <Card>
@@ -151,7 +151,7 @@ function OverviewTab({ p }: { p: any }) {
           <CardContent className="p-4 space-y-1 text-sm">
             <p className="text-xs text-muted-foreground">Value</p>
             <p className="text-lg font-bold text-amber-700">{formatCurrency(p.quotation?.total ?? 0)}</p>
-            <p className="text-xs text-muted-foreground">{p.quotation?.quotationNo ?? "—"}</p>
+            <p className="text-xs text-muted-foreground">{p.quotation?.quotationNo ?? "-"}</p>
           </CardContent>
         </Card>
       </div>
@@ -166,7 +166,7 @@ function QuotationTab({ p }: { p: any }) {
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader><CardTitle className="text-base">{q.quotationNo} · <StatusBadge status={q.status} /></CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">{q.quotationNo}, <StatusBadge status={q.status} /></CardTitle></CardHeader>
         <CardContent className="text-sm space-y-1">
           <div className="flex justify-between"><span className="text-muted-foreground">Total</span><span className="font-bold text-amber-700">{formatCurrency(q.total)}</span></div>
           <div className="flex justify-between"><span className="text-muted-foreground">Payment terms</span><span>{q.paymentTerms}</span></div>
@@ -222,7 +222,7 @@ function BoqTab({ p, user }: { p: any; user: SessionUser }) {
                 data={b.items}
                 columns={[
                   { key: "description", header: "Description" },
-                  { key: "spec", header: "Spec", render: (i: any) => i.spec || "—" },
+                  { key: "spec", header: "Spec", render: (i: any) => i.spec || "-" },
                   { key: "qty", header: "Qty", render: (i: any) => `${i.qty} ${i.unit}` },
                   {
                     key: "available",
@@ -372,7 +372,7 @@ function StoreTab({ p }: { p: any }) {
             { key: "reportNo", header: "Report" },
             { key: "grnNo", header: "GRN" },
             { key: "status", header: "Status", render: (r: any) => <StatusBadge status={r.status} /> },
-            { key: "remarks", header: "Remarks", render: (r: any) => r.remarks || "—" },
+            { key: "remarks", header: "Remarks", render: (r: any) => r.remarks || "-" },
           ]}
         />
       </Section>
@@ -407,7 +407,7 @@ function ProductionTab({ p, user }: { p: any; user: SessionUser }) {
           refType="ProductionStage"
           refId={qcTarget.stageId}
           productionStageId={qcTarget.stageId}
-          title={`QC — ${qcTarget.stageName}`}
+          title={`QC - ${qcTarget.stageName}`}
         />
       )}
     </div>
@@ -449,7 +449,7 @@ function DeliveryTab({ p, user }: { p: any; user: SessionUser }) {
               <Row label="Delivered by" value={ack.deliverer?.name} />
               <Row label="Delivered at" value={formatDateTime(ack.deliveredAt)} />
               <Row label="Client signed" value={ack.clientSigned ? "Yes" : "No"} />
-              <Row label="Remarks" value={ack.remarks || "—"} />
+              <Row label="Remarks" value={ack.remarks || "-"} />
             </>
           ) : (
             <p className="text-muted-foreground">No delivery acknowledgement yet.</p>
@@ -679,7 +679,7 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex justify-between gap-2">
       <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium text-right">{value ?? "—"}</span>
+      <span className="font-medium text-right">{value ?? "-"}</span>
     </div>
   );
 }

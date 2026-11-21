@@ -61,7 +61,7 @@ export function ProductionStageStepper({
             <StatusBadge status={order.status} />
           </CardTitle>
           <div className="text-xs text-muted-foreground">
-            {order.project?.name} · Due {formatDateTime(order.dueDate)}
+            {order.project?.name}, Due {formatDateTime(order.dueDate)}
           </div>
         </div>
       </CardHeader>
@@ -161,7 +161,7 @@ export function ProductionStageStepper({
                     )}
                     {canOperate && stage.status === "NOT_STARTED" && !unlocked && (
                       <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <AlertCircle className="size-3" /> Locked — previous stage pending
+                        <AlertCircle className="size-3" /> Locked - previous stage pending
                       </span>
                     )}
                     {canOperate && ["NOT_STARTED", "IN_PROGRESS"].includes(stage.status) && unlocked && (
@@ -200,7 +200,7 @@ function StageButton({
       disabled={mutation.isPending}
       onClick={() =>
         mutation.mutate({ action, ...payload }, {
-          onSuccess: () => toast.success(`${label} — done`),
+          onSuccess: () => toast.success(`${label} - done`),
           onError: (e: any) => toast.error(e.message),
         })
       }
@@ -244,7 +244,7 @@ function QcFailButton({ stageId }: { stageId: string }) {
       disabled={mutation.isPending}
       onClick={() =>
         mutation.mutate(
-          { action: "qc-fail-stage", stageId, qcReportData: { remarks: "QC failed — rework needed" } },
+          { action: "qc-fail-stage", stageId, qcReportData: { remarks: "QC failed - rework needed" } },
           {
             onSuccess: () => toast.success("Stage QC failed"),
             onError: (e: any) => toast.error(e.message),

@@ -54,7 +54,7 @@ function SupplierQuoteDetailDialog({ id, onOpenChange, user }: { id: string | nu
         </DialogHeader>
         <ScrollArea className="max-h-[70vh]">
           {isLoading ? (
-            <p className="p-4 text-sm text-muted-foreground">Loading…</p>
+            <p className="p-4 text-sm text-muted-foreground">Loading...</p>
           ) : s ? (
             <div className="space-y-2 text-sm p-1">
               <div className="flex justify-between"><span className="text-muted-foreground">MRQ</span><span>{s.mrq?.mrqNo}</span></div>

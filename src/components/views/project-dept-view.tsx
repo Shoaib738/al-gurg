@@ -43,17 +43,17 @@ export function ProjectDeptView({
           {
             key: "ack",
             header: "Delivery",
-            render: (p) => (p.deliveryAck ? <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200">Signed</Badge> : "—"),
+            render: (p) => (p.deliveryAck ? <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200">Signed</Badge> : "-"),
           },
           {
             key: "inst",
             header: "Installation",
-            render: (p) => (p.installation ? <StatusBadge status={p.installation.status} /> : "—"),
+            render: (p) => (p.installation ? <StatusBadge status={p.installation.status} /> : "-"),
           },
           {
             key: "fb",
             header: "Feedback",
-            render: (p) => (p.feedback ? <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200">Submitted</Badge> : "—"),
+            render: (p) => (p.feedback ? <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200">Submitted</Badge> : "-"),
           },
         ]}
       />

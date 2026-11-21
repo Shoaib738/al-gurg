@@ -131,7 +131,7 @@ function GrnDetailDialog({ id, onOpenChange, user }: { id: string | null; onOpen
           </DialogHeader>
           <ScrollArea className="max-h-[70vh]">
             {isLoading ? (
-              <p className="p-4 text-sm text-muted-foreground">Loading…</p>
+              <p className="p-4 text-sm text-muted-foreground">Loading...</p>
             ) : g ? (
               <div className="space-y-3 text-sm p-1">
                 <div className="flex justify-between"><span className="text-muted-foreground">LPO</span><span>{g.lpo?.lpoNo}</span></div>
@@ -152,7 +152,7 @@ function GrnDetailDialog({ id, onOpenChange, user }: { id: string | null; onOpen
                     ))}
                   </div>
                 </div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Tax invoice no</span><span>{g.taxInvoiceNo || "—"}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Tax invoice no</span><span>{g.taxInvoiceNo || "-"}</span></div>
                 {g.qcReport && (
                   <Card>
                     <CardContent className="p-3 text-xs space-y-1">
@@ -205,7 +205,7 @@ function GrnDetailDialog({ id, onOpenChange, user }: { id: string | null; onOpen
           type="DELIVERY_INSPECTION"
           refType="LPO"
           refId={g.lpoId}
-          title={`QC — GRN ${g.grnNo}`}
+          title={`QC - GRN ${g.grnNo}`}
         />
       )}
     </>
@@ -244,7 +244,7 @@ function CreateGrnDialog({ open, onOpenChange }: { open: boolean; onOpenChange: 
               <SelectTrigger className="h-10"><SelectValue placeholder="Select LPO" /></SelectTrigger>
               <SelectContent>
                 {(lpos ?? []).filter((l: any) => l.status !== "CLOSED").map((l: any) => (
-                  <SelectItem key={l.id} value={l.id}>{l.lpoNo} — {l.supplier?.name}</SelectItem>
+                  <SelectItem key={l.id} value={l.id}>{l.lpoNo} - {l.supplier?.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -291,7 +291,7 @@ function CreateGrnDialog({ open, onOpenChange }: { open: boolean; onOpenChange: 
                   remarks,
                 },
                 {
-                  onSuccess: () => { toast.success("GRN created — QC pending"); onOpenChange(false); },
+                  onSuccess: () => { toast.success("GRN created - QC pending"); onOpenChange(false); },
                   onError: (e: any) => toast.error(e.message),
                 }
               );

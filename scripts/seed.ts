@@ -2,25 +2,31 @@
 // Run with: bun run scripts/seed.ts
 
 import { PrismaClient, UserRole, ClientType, EnquirySource, EnquiryStatus, QuotationStatus, ProjectStatus, BoqStatus, MrqStatus, ProductionType, StageStatus, DrawingStatus, PaymentLinkStatus, RedFlagSeverity } from '@prisma/client'
+import bcrypt from 'bcryptjs'
 
 const db = new PrismaClient()
 
+// Default password for all demo accounts. In production, each user gets a unique
+// password set by an administrator and the default is never used.
+const DEFAULT_PASSWORD = 'Welcome@2026'
+
 async function main() {
-  console.log('🌱 Seeding Al Gurg Furniture ERP...')
+  console.log('Seeding Al Gurg Furniture operations database...')
+  const passwordHash = await bcrypt.hash(DEFAULT_PASSWORD, 10)
 
   // ---------- USERS ----------
   const users = {
-    admin: await db.user.create({ data: { email: 'admin@algurg.test', name: 'System Admin', role: UserRole.ADMIN, phone: '+971500000001' } }),
-    mazen: await db.user.create({ data: { email: 'mazen@algurg.test', name: 'Mr. Mazen', role: UserRole.BUSINESS_MANAGER, phone: '+971500000002' } }),
-    roy: await db.user.create({ data: { email: 'roy@algurg.test', name: 'Mr. Roy', role: UserRole.ESTIMATION, phone: '+971500000003' } }),
-    sales: await db.user.create({ data: { email: 'sales@algurg.test', name: 'Sales Team Lead', role: UserRole.SALES, phone: '+971500000004' } }),
-    nimesha: await db.user.create({ data: { email: 'nimesha@algurg.test', name: 'Ms. Nimesha', role: UserRole.PROCUREMENT, phone: '+971500000005' } }),
-    store: await db.user.create({ data: { email: 'store@algurg.test', name: 'Store Keeper', role: UserRole.STORE, phone: '+971500000006' } }),
-    venkat: await db.user.create({ data: { email: 'venkat@algurg.test', name: 'Mr. Venketeswaram', role: UserRole.QC, phone: '+971500000007' } }),
-    motasem: await db.user.create({ data: { email: 'motasem@algurg.test', name: 'Mr. Motasem', role: UserRole.PRODUCTION, phone: '+971500000008' } }),
-    draft: await db.user.create({ data: { email: 'draftsman@algurg.test', name: 'Technical Drafter', role: UserRole.ENGINEERING, phone: '+971500000009' } }),
-    wasim: await db.user.create({ data: { email: 'wasim@algurg.test', name: 'Mr. Wasim', role: UserRole.PROJECT, phone: '+971500000010' } }),
-    finance: await db.user.create({ data: { email: 'finance@algurg.test', name: 'Finance Officer', role: UserRole.FINANCE, phone: '+971500000011' } }),
+    admin: await db.user.create({ data: { email: 'admin@algurgfurniture.ae', name: 'System Administrator', role: UserRole.ADMIN, phone: '+971500000001', passwordHash } }),
+    mazen: await db.user.create({ data: { email: 'mazen@algurgfurniture.ae', name: 'Mr. Mazen Al Gurg', role: UserRole.BUSINESS_MANAGER, phone: '+971500000002', passwordHash } }),
+    roy: await db.user.create({ data: { email: 'roy@algurgfurniture.ae', name: 'Mr. Roy Mathew', role: UserRole.ESTIMATION, phone: '+971500000003', passwordHash } }),
+    sales: await db.user.create({ data: { email: 'sales@algurgfurniture.ae', name: 'Sales Team Lead', role: UserRole.SALES, phone: '+971500000004', passwordHash } }),
+    nimesha: await db.user.create({ data: { email: 'nimesha@algurgfurniture.ae', name: 'Ms. Nimesha Perera', role: UserRole.PROCUREMENT, phone: '+971500000005', passwordHash } }),
+    store: await db.user.create({ data: { email: 'store@algurgfurniture.ae', name: 'Store Keeper', role: UserRole.STORE, phone: '+971500000006', passwordHash } }),
+    venkat: await db.user.create({ data: { email: 'venkat@algurgfurniture.ae', name: 'Mr. Venketeswaram', role: UserRole.QC, phone: '+971500000007', passwordHash } }),
+    motasem: await db.user.create({ data: { email: 'motasem@algurgfurniture.ae', name: 'Mr. Motasem Al Rashid', role: UserRole.PRODUCTION, phone: '+971500000008', passwordHash } }),
+    draft: await db.user.create({ data: { email: 'draftsman@algurgfurniture.ae', name: 'Technical Drafter', role: UserRole.ENGINEERING, phone: '+971500000009', passwordHash } }),
+    wasim: await db.user.create({ data: { email: 'wasim@algurgfurniture.ae', name: 'Mr. Wasim Khan', role: UserRole.PROJECT, phone: '+971500000010', passwordHash } }),
+    finance: await db.user.create({ data: { email: 'finance@algurgfurniture.ae', name: 'Finance Officer', role: UserRole.FINANCE, phone: '+971500000011', passwordHash } }),
   }
 
   // ---------- CLIENTS ----------
@@ -563,11 +569,11 @@ async function main() {
     await db.notification.create({ data: n })
   }
 
-  console.log('✅ Seed complete. Demo users:')
+  console.log('Seed complete. Demo user accounts created:')
   for (const [k, u] of Object.entries(users)) {
-    console.log(`   ${k.padEnd(10)} → ${u.email}  (${u.role})`)
+    console.log(`   ${k.padEnd(10)} ${u.email}  (${u.role})`)
   }
-  console.log('   Password for all demo accounts: demo123')
+  console.log(`   Default password for all accounts: ${DEFAULT_PASSWORD}`)
 }
 
 main()

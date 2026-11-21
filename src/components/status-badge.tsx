@@ -142,7 +142,7 @@ export function StatusBadge({
       variant="outline"
       className={cn(TONE_CLASSES[tone], "font-medium capitalize", className)}
     >
-      {children ?? (value ? titleCase(value) : "—")}
+      {children ?? (value ? titleCase(value) : "-")}
     </Badge>
   );
 }

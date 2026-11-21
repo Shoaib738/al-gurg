@@ -54,18 +54,18 @@ function BoqDetailDialog({ id, onOpenChange, user }: { id: string | null; onOpen
         </DialogHeader>
         <ScrollArea className="max-h-[70vh]">
           {isLoading ? (
-            <p className="p-4 text-sm text-muted-foreground">Loading…</p>
+            <p className="p-4 text-sm text-muted-foreground">Loading...</p>
           ) : b ? (
             <div className="space-y-3 p-1">
               <div className="flex items-center justify-between text-sm">
-                <span>{b.project?.name} · {b.project?.projectNo}</span>
+                <span>{b.project?.name}, {b.project?.projectNo}</span>
                 <StatusBadge status={b.status} />
               </div>
               <DataTable
                 data={b.items}
                 columns={[
                   { key: "description", header: "Description" },
-                  { key: "spec", header: "Spec", render: (i: any) => i.spec || "—" },
+                  { key: "spec", header: "Spec", render: (i: any) => i.spec || "-" },
                   { key: "qty", header: "Qty", render: (i: any) => `${i.qty} ${i.unit}` },
                   {
                     key: "available",

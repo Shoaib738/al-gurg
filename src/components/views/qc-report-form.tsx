@@ -32,6 +32,7 @@ import {
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { EmailPreviewDialog } from "../erp/email-preview";
+import { FileUploadButton, UploadedFileChip } from "../file-upload-button";
 
 interface ChecklistItem {
   name: string;
@@ -66,6 +67,7 @@ export function QcReportFormDialog({
   const [missingInput, setMissingInput] = useState("");
   const [status, setStatus] = useState<"PASSED" | "FAILED" | "PARTIAL">("PASSED");
   const [emailPreview, setEmailPreview] = useState<any>(null);
+  const [photos, setPhotos] = useState<{ url: string; filename: string }[]>([]);
 
   function submit() {
     mutation.mutate(
@@ -78,6 +80,7 @@ export function QcReportFormDialog({
         checklist,
         remarks,
         missingItems,
+        photos: photos.map((p) => p.url),
       },
       {
         onSuccess: (created: any) => {
@@ -92,7 +95,7 @@ export function QcReportFormDialog({
             },
             {
               onSuccess: (data: any) => {
-                toast.success(`QC report submitted — ${status}`);
+                toast.success(`QC report submitted - ${status}`);
                 if (data?.email) {
                   setEmailPreview(data.email);
                 }
@@ -104,6 +107,7 @@ export function QcReportFormDialog({
                 ]);
                 setRemarks("");
                 setMissingItems([]);
+                setPhotos([]);
               },
               onError: (e: any) => toast.error(e.message),
             }
@@ -223,6 +227,31 @@ export function QcReportFormDialog({
                     </li>
                   ))}
                 </ul>
+              )}
+            </div>
+
+            <div className="grid gap-1.5">
+              <Label>Inspection photos</Label>
+              <FileUploadButton
+                category="qc-photo"
+                refType={refType}
+                refId={refId}
+                accept="image/*"
+                multiple
+                label="Upload photos"
+                onUploaded={(files) => setPhotos((p) => [...p, ...files])}
+              />
+              {photos.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {photos.map((p, i) => (
+                    <UploadedFileChip
+                      key={i}
+                      url={p.url}
+                      filename={p.filename}
+                      onRemove={() => setPhotos((prev) => prev.filter((_, j) => j !== i))}
+                    />
+                  ))}
+                </div>
               )}
             </div>
 

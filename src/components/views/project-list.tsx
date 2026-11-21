@@ -30,7 +30,7 @@ export function ProjectList({
           { key: "projectNo", header: "Project No", render: (p) => <span className="font-medium">{p.projectNo}</span> },
           { key: "name", header: "Name" },
           { key: "client", header: "Client", render: (p) => p.client?.name },
-          { key: "quotation", header: "Quotation", render: (p) => p.quotation?.quotationNo ?? "—" },
+          { key: "quotation", header: "Quotation", render: (p) => p.quotation?.quotationNo ?? "-" },
           { key: "startDate", header: "Start", render: (p) => formatDate(p.startDate) },
           { key: "dueDate", header: "Due", render: (p) => formatDate(p.dueDate) },
           { key: "status", header: "Status", render: (p) => <StatusBadge status={p.status} /> },

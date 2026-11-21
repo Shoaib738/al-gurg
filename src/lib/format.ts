@@ -1,4 +1,4 @@
-// Formatting utilities — AED currency, dd-MMM-yyyy dates, etc.
+// Formatting utilities - AED currency, dd-MMM-yyyy dates, etc.
 
 const DUBAI_TZ = "Asia/Dubai";
 
@@ -23,9 +23,9 @@ export function formatCurrencyDetailed(amount: number | null | undefined): strin
 export function formatDate(
   date: Date | string | null | undefined
 ): string {
-  if (!date) return "—";
+  if (!date) return "-";
   const d = typeof date === "string" ? new Date(date) : date;
-  if (isNaN(d.getTime())) return "—";
+  if (isNaN(d.getTime())) return "-";
   return d.toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "short",
@@ -37,9 +37,9 @@ export function formatDate(
 export function formatDateTime(
   date: Date | string | null | undefined
 ): string {
-  if (!date) return "—";
+  if (!date) return "-";
   const d = typeof date === "string" ? new Date(date) : date;
-  if (isNaN(d.getTime())) return "—";
+  if (isNaN(d.getTime())) return "-";
   return d.toLocaleString("en-GB", {
     day: "2-digit",
     month: "short",
@@ -53,9 +53,9 @@ export function formatDateTime(
 export function formatRelativeTime(
   date: Date | string | null | undefined
 ): string {
-  if (!date) return "—";
+  if (!date) return "-";
   const d = typeof date === "string" ? new Date(date) : date;
-  if (isNaN(d.getTime())) return "—";
+  if (isNaN(d.getTime())) return "-";
   const now = Date.now();
   const diff = now - d.getTime();
   const sec = Math.floor(diff / 1000);

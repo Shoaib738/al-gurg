@@ -57,7 +57,7 @@ function LpoDetailDialog({ id, onOpenChange, user }: { id: string | null; onOpen
           </DialogHeader>
           <ScrollArea className="max-h-[70vh]">
             {isLoading ? (
-              <p className="p-4 text-sm text-muted-foreground">Loading…</p>
+              <p className="p-4 text-sm text-muted-foreground">Loading...</p>
             ) : l ? (
               <div className="space-y-3 text-sm p-1">
                 <div className="flex justify-between"><span className="text-muted-foreground">Supplier</span><span>{l.supplier?.name}</span></div>

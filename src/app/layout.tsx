@@ -16,17 +16,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Al Gurg Furniture Group — Production & Operations ERP",
+  title: "Al Gurg Furniture Group | Operations Portal",
   description:
-    "End-to-end production & operations management for Al Gurg Furniture Group: enquiries, quotations, procurement, store, QC, production, engineering, delivery and finance.",
+    "Production and operations management portal for Al Gurg Furniture Group covering enquiries, quotations, procurement, store, quality control, production, engineering, delivery and finance.",
   keywords: [
-    "Al Gurg",
-    "Furniture",
-    "ERP",
-    "Production",
-    "Operations",
+    "Al Gurg Furniture",
+    "Operations Portal",
+    "Production Management",
     "Procurement",
-    "QC",
+    "Quality Control",
   ],
   authors: [{ name: "Al Gurg Furniture Group" }],
 };

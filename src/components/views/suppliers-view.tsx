@@ -40,16 +40,16 @@ export function SuppliersView({ user }: { user: SessionUser }) {
         data={data}
         columns={[
           { key: "name", header: "Name", render: (s) => <span className="font-medium">{s.name}</span> },
-          { key: "contactPerson", header: "Contact", render: (s) => s.contactPerson || "—" },
-          { key: "email", header: "Email", render: (s) => s.email || "—" },
-          { key: "phone", header: "Phone", render: (s) => s.phone || "—" },
-          { key: "materials", header: "Materials", render: (s) => s.materials || "—" },
+          { key: "contactPerson", header: "Contact", render: (s) => s.contactPerson || "-" },
+          { key: "email", header: "Email", render: (s) => s.email || "-" },
+          { key: "phone", header: "Phone", render: (s) => s.phone || "-" },
+          { key: "materials", header: "Materials", render: (s) => s.materials || "-" },
           {
             key: "counts",
             header: "Activity",
             render: (s) => (
               <span className="text-xs text-muted-foreground">
-                {s._count?.supplierQuotes ?? 0} quotes · {s._count?.prs ?? 0} PRs · {s._count?.lpos ?? 0} LPOs
+                {s._count?.supplierQuotes ?? 0} quotes, {s._count?.prs ?? 0} PRs, {s._count?.lpos ?? 0} LPOs
               </span>
             ),
           },
@@ -103,7 +103,7 @@ function CreateSupplierDialog({ open, onOpenChange }: { open: boolean; onOpenCha
           </div>
           <div className="grid gap-1.5">
             <Label>Materials supplied</Label>
-            <Input value={form.materials} onChange={(e) => setForm({ ...form, materials: e.target.value })} placeholder="MDF, hinges, hardware…" />
+            <Input value={form.materials} onChange={(e) => setForm({ ...form, materials: e.target.value })} placeholder="MDF, hinges, hardware..." />
           </div>
         </div>
         <DialogFooter>
